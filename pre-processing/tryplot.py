@@ -12,7 +12,7 @@ def print3D(points):
     ax.set_box_aspect((np.ptp(xs), np.ptp(ys), np.ptp(zs)))
     
           
-    ax.plot(xs, ys, zs)
+    ax.scatter(xs, ys, zs)
     plt.show()
 
 
