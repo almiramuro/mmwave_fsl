@@ -1,4 +1,10 @@
-﻿import serial
+# Tasks
+
+# Aaron: Processing radar configuration
+# Mira : Process points
+# Luis: Plot points and overall flow of script
+
+import serial
 import time
 import numpy as np
 import pyqtgraph as pg
@@ -42,6 +48,7 @@ def serialConfig(configFileName):
 
 # ------------------------------------------------------------------
 
+# AARON
 # Function to parse the data inside the configuration file
 def parseConfigFile(configFileName):
     configParameters = {} # Initialize an empty dictionary to store the configuration parameters
@@ -95,6 +102,7 @@ def parseConfigFile(configFileName):
    
 # ------------------------------------------------------------------
 
+# MIRA
 # Funtion to read and parse the incoming data
 def readAndParseData14xx(Dataport, configParameters):
     global byteBuffer, byteBufferLength
@@ -293,45 +301,53 @@ def update():
 
 # -------------------------    MAIN   -----------------------------------------  
 
-if __name__=="__main__":
-    # Configurate the serial port
-    CLIport, Dataport = serialConfig(configFileName)
+# Configurate the serial port
+CLIport, Dataport = serialConfig(configFileName)
 
-    # Get the configuration parameters from the configuration file
-    configParameters = parseConfigFile(configFileName)
+# Get the configuration parameters from the configuration file
+configParameters = parseConfigFile(configFileName)
 
-    # START QtAPPfor the plot
-    app = QtGui.QApplication([])
+# START QtAPPfor the plot
+app = QtGui.QApplication([])
 
-    # Set the plot 
-    pg.setConfigOption('background','w')
-    win = pg.GraphicsWindow(title="2D scatter plot")
-    p = win.addPlot()
-    p.setXRange(-0.5,0.5)
-    p.setYRange(0,1.5)
-    p.setLabel('left',text = 'Y position (m)')
-    p.setLabel('bottom', text= 'X position (m)')
-    s = p.plot([],[],pen=None,symbol='o')
+# Set the plot 
+pg.setConfigOption('background','w')
+win = pg.GraphicsWindow(title="2D scatter plot")
+p = win.addPlot()
+p.setXRange(-0.5,0.5)
+p.setYRange(0,1.5)
+p.setLabel('left',text = 'Y position (m)')
+p.setLabel('bottom', text= 'X position (m)')
+s = p.plot([],[],pen=None,symbol='o')
+    
+   
+# Main loop 
+detObj = {}  
+frameData = {}    
+currentIndex = 0
+while True:
+    try:
+        # Update the data and check if the data is okay
+        dataOk = update()
+        
+        if dataOk:
+            # Store the current frame into frameData
+            frameData[currentIndex] = detObj
+            currentIndex += 1
+        
+        time.sleep(0.033) # Sampling frequency of 30 Hz
+        
+    # Stop the program and close everything if Ctrl + c is pressed
+    except KeyboardInterrupt:
+        CLIport.write(('sensorStop\n').encode())
+        CLIport.close()
+        Dataport.close()
+        win.close()
+        break
+        
+    
 
-    detObj = {}  
-    frameData = {}    
-    currentIndex = 0
-    while True:
-        try:
-            # Update the data and check if the data is okay
-            dataOk = update()
-            
-            if dataOk:
-                # Store the current frame into frameData
-                frameData[currentIndex] = detObj
-                currentIndex += 1
-            
-            time.sleep(0.033) # Sampling frequency of 30 Hz
-            
-        # Stop the program and close everything if Ctrl + c is pressed
-        except KeyboardInterrupt:
-            CLIport.write(('sensorStop\n').encode())
-            CLIport.close()
-            Dataport.close()
-            win.close()
-            break
+
+
+
+
