@@ -1,12 +1,17 @@
 ﻿import serial
 import time
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 
+from plot import *
+
 # Change the configuration file name
-configFileName = '2m_radar_config.cfg'
-# configFileName = '1443config.cfg' 
+# configFileName = '2m_radar_config.cfg'
+configFileName = '1443config.cfg' 
 
 CLIport = {}
 Dataport = {}
@@ -279,64 +284,141 @@ def update():
     global detObj
     x = []
     y = []
+    z = []
       
     # Read and parse the received data
     dataOk, frameNumber, detObj = readAndParseData16xx(Dataport, configParameters)
     
-    if dataOk and len(detObj["x"])>0:
-        #print(detObj)
-        x = -detObj["x"]
-        y = detObj["y"]
+    if dataOk and len(detObj["x"]) > 0:
+
+        # xm, ym, zm = ax.get_xlim3d(), ax.get_ylim3d(), ax.get_zlim3d()
+        print(detObj["x"])
+
+        for i in range(detObj["x"].size):
+            x, y, z = detObj["x"][i], detObj["y"][i], detObj["z"][i]
+            
+            # if xm[0] <= x <= xm[1] and ym[0] <= y <= ym[1] and zm[0] <= z <= zm[1]:
+            # print(x)
+
+            # pt = Point((x, y, z), size=3, marker='.')
+            # ax.add_artist(pt)
+
+            ax.plot3D([x], [y], [z], 'bo')
+
+
+        # x = -detObj["x"]
+        # y = detObj["y"]
         
-        s.setData(x,y)
-        QtGui.QApplication.processEvents()
+        # s.setData(x,y)
+        # QtGui.QApplication.processEvents()
     
     return dataOk
 
 
 # -------------------------    MAIN   -----------------------------------------  
 
-# Configurate the serial port
-CLIport, Dataport = serialConfig(configFileName)
+if __name__ == '__main__':
+    # Configurate the serial port
+    CLIport, Dataport = serialConfig(configFileName)
 
-# Get the configuration parameters from the configuration file
-configParameters = parseConfigFile(configFileName)
+    # Get the configuration parameters from the configuration file
+    configParameters = parseConfigFile(configFileName)
 
-# START QtAPPfor the plot
-app = QtGui.QApplication([])
+    fps = 30
+    dt = 1 / fps
 
-# Set the plot 
-pg.setConfigOption('background','w')
-win = pg.GraphicsLayoutWidget(title="2D scatter plot")
-p = win.addPlot()
-p.setXRange(-0.5,0.5)
-p.setYRange(0,3)
-p.setLabel('left',text = 'Y position (m)')
-p.setLabel('bottom', text= 'X position (m)')
-s = p.plot([],[],pen=None,symbol='o')
-win.show()
+    range_max = 3.0
+    d = range_max
+
+    fig = plt.figure(figsize=(6,6))
+    ax = fig.add_subplot(projection='3d')
+    # ax = plt.subplot(1, 1, 1, projection='3d') 
+
+    # ax.view_init(azim=-45, elev=15)
+
+    ax.set_xlabel('x [m]')
+    ax.set_ylabel('y [m]')
+    ax.set_zlabel('z [m]')
+
+    ax.set_xlim3d((-d / 2, +d / 2))
+    ax.set_ylim3d((0, d))
+    ax.set_zlim3d((-d / 2, +d / 2))
+
+    fig.canvas.draw()
+
+    plt.show(block=False)
+
+    # ax.xaxis.pane.fill = False
+    # ax.yaxis.pane.fill = False
+    # ax.zaxis.pane.fill = False
+
+    # ax.xaxis._axinfo['grid']['linestyle'] = ':'
+    # ax.yaxis._axinfo['grid']['linestyle'] = ':'
+    # ax.zaxis._axinfo['grid']['linestyle'] = ':'
+
+    # fig.tight_layout(pad=1)
+        
+    # ax.scatter(xs=[], ys=[], zs=[], marker='.', cmap='jet')
+
+    # xlim = ax.get_xlim3d()
+    # ylim = ax.get_ylim3d()
+    # zlim = ax.get_zlim3d()
+
+    # xmean = np.mean(xlim)
+    # ymean = np.mean(ylim)
+    # zmean = np.mean(zlim)
+
+    # plot_radius = max([abs(lim - mean_) for lims, mean_ in ((xlim, xmean), (ylim, ymean), (zlim, zmean)) for lim in lims])
+
+    # ax.set_xlim3d([xmean - plot_radius, xmean + plot_radius])
+    # ax.set_ylim3d([ymean - plot_radius, ymean + plot_radius])
+    # ax.set_zlim3d([zmean - plot_radius, zmean + plot_radius])
+
+    # mpl.colors._colors_full_map.cache.clear()
+
+    # fig.canvas.draw()
     
-   
-# Main loop 
-detObj = {}  
-frameData = {}    
-currentIndex = 0
-while True:
-    try:
-        # Update the data and check if the data is okay
-        dataOk = update()
+    # plt.show(block=False)
+
+    # # START QtAPPfor the plot
+    # app = QtGui.QApplication([])
+
+    # # Set the plot 
+    # pg.setConfigOption('background','w')
+    # win = pg.GraphicsLayoutWidget(title="2D scatter plot")
+    # p = win.addPlot()
+    # p.setXRange(-0.5,0.5)
+    # p.setYRange(0,3)
+    # p.setLabel('left',text = 'Y position (m)')
+    # p.setLabel('bottom', text= 'X position (m)')
+    # s = p.plot([],[],pen=None,symbol='o')
+    # win.show()
         
-        if dataOk:
-            # Store the current frame into frameData
-            frameData[currentIndex] = detObj
-            currentIndex += 1
-        
-        time.sleep(0.03) # Sampling frequency of 30 Hz
-        
-    # Stop the program and close everything if Ctrl + c is pressed
-    except KeyboardInterrupt:
-        CLIport.write(('sensorStop\n').encode())
-        CLIport.close()
-        Dataport.close()
-        win.close()
-        break
+    
+    # Main loop 
+    detObj = {}  
+    frameData = {}    
+    currentIndex = 0
+    while True:
+        try:
+            # Update the data and check if the data is okay
+            dataOk = update()
+            # plt.show(block=False)
+            
+            if dataOk:
+                # Store the current frame into frameData
+                frameData[currentIndex] = detObj
+                currentIndex += 1
+
+                fig.canvas.draw_idle()
+            
+            time.sleep(dt) # FPS
+            
+        # Stop the program and close everything if Ctrl + c is pressed
+        except KeyboardInterrupt:
+            CLIport.write(('sensorStop\n').encode())
+            CLIport.close()
+            Dataport.close()
+            plt.clf()
+            # win.close()
+            break
