@@ -5,12 +5,13 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 
 # Change the configuration file name
-configFileName = '1443config.cfg'
+configFileName = '2m_radar_config.cfg'
+# configFileName = '1443config.cfg' 
 
 CLIport = {}
 Dataport = {}
 byteBuffer = np.zeros(2**15,dtype = 'uint8')
-byteBufferLength = 0;
+byteBufferLength = 0
 
 
 # ------------------------------------------------------------------
@@ -24,8 +25,8 @@ def serialConfig(configFileName):
     # Open the serial ports for the configuration and the data ports
     
     # Raspberry pi
-    #CLIport = serial.Serial('/dev/ttyACM0', 115200)
-    #Dataport = serial.Serial('/dev/ttyACM1', 921600)
+    # CLIport = serial.Serial('/dev/ttyACM0', 115200)
+    # Dataport = serial.Serial('/dev/ttyACM1', 921600)
     
     # Windows
     CLIport = serial.Serial('COM4', 115200)
@@ -64,21 +65,21 @@ def parseConfigFile(configFileName):
             rampEndTime = float(splitWords[5])
             freqSlopeConst = float(splitWords[8])
             numAdcSamples = int(splitWords[10])
-            numAdcSamplesRoundTo2 = 1;
+            numAdcSamplesRoundTo2 = 1
             
             while numAdcSamples > numAdcSamplesRoundTo2:
-                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2;
+                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2
                 
-            digOutSampleRate = int(splitWords[11]);
+            digOutSampleRate = int(splitWords[11])
             
         # Get the information about the frame configuration    
         elif "frameCfg" in splitWords[0]:
             
-            chirpStartIdx = int(splitWords[1]);
-            chirpEndIdx = int(splitWords[2]);
-            numLoops = int(splitWords[3]);
-            numFrames = int(splitWords[4]);
-            framePeriodicity = int(splitWords[5]);
+            chirpStartIdx = int(splitWords[1])
+            chirpEndIdx = int(splitWords[2])
+            numLoops = int(splitWords[3])
+            numFrames = int(splitWords[4])
+            framePeriodicity = float(splitWords[5])
 
             
     # Combine the read data to obtain the configuration parameters           
@@ -96,15 +97,15 @@ def parseConfigFile(configFileName):
 # ------------------------------------------------------------------
 
 # Funtion to read and parse the incoming data
-def readAndParseData14xx(Dataport, configParameters):
+def readAndParseData16xx(Dataport, configParameters):
     global byteBuffer, byteBufferLength
-    
+
     # Constants
-    OBJ_STRUCT_SIZE_BYTES = 12;
-    BYTE_VEC_ACC_MAX_SIZE = 2**15;
-    MMWDEMO_UART_MSG_DETECTED_POINTS = 1;
-    MMWDEMO_UART_MSG_RANGE_PROFILE   = 2;
-    maxBufferSize = 2**15;
+    OBJ_STRUCT_SIZE_BYTES = 12
+    BYTE_VEC_ACC_MAX_SIZE = 2**15
+    MMWDEMO_UART_MSG_DETECTED_POINTS = 1
+    MMWDEMO_UART_MSG_RANGE_PROFILE   = 2
+    maxBufferSize = 2**15
     magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
     
     # Initialize variables
@@ -112,6 +113,7 @@ def readAndParseData14xx(Dataport, configParameters):
     dataOK = 0 # Checks if the data has been read correctly
     frameNumber = 0
     detObj = {}
+    tlv_type = 0
     
     readBuffer = Dataport.read(Dataport.in_waiting)
     byteVec = np.frombuffer(readBuffer, dtype = 'uint8')
@@ -183,10 +185,8 @@ def readAndParseData14xx(Dataport, configParameters):
         idX += 4
         numTLVs = np.matmul(byteBuffer[idX:idX+4],word)
         idX += 4
-        
-        # UNCOMMENT IN CASE OF SDK 2
-        #subFrameNumber = np.matmul(byteBuffer[idX:idX+4],word)
-        #idX += 4
+        # subFrameNumber = np.matmul(byteBuffer[idX:idX+4],word)
+        # idX += 4
         
         # Read the TLV messages
         for tlvIdx in range(numTLVs):
@@ -195,10 +195,13 @@ def readAndParseData14xx(Dataport, configParameters):
             word = [1, 2**8, 2**16, 2**24]
 
             # Check the header of the TLV message
-            tlv_type = np.matmul(byteBuffer[idX:idX+4],word)
-            idX += 4
-            tlv_length = np.matmul(byteBuffer[idX:idX+4],word)
-            idX += 4
+            try:
+                tlv_type = np.matmul(byteBuffer[idX:idX+4],word)
+                idX += 4
+                tlv_length = np.matmul(byteBuffer[idX:idX+4],word)
+                idX += 4
+            except:
+                pass
             
             # Read the data depending on the TLV message
             if tlv_type == MMWDEMO_UART_MSG_DETECTED_POINTS:
@@ -249,13 +252,13 @@ def readAndParseData14xx(Dataport, configParameters):
                 detObj = {"numObj": tlv_numObj, "rangeIdx": rangeIdx, "range": rangeVal, "dopplerIdx": dopplerIdx, \
                           "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z}
                 
-                dataOK = 1             
+                dataOK = 1
+       
         
-  
         # Remove already processed data
         if idX > 0 and byteBufferLength > idX:
             shiftSize = totalPacketLen
-               
+                    
             byteBuffer[:byteBufferLength - shiftSize] = byteBuffer[shiftSize:byteBufferLength]
             byteBuffer[byteBufferLength - shiftSize:] = np.zeros(len(byteBuffer[byteBufferLength - shiftSize:]),dtype = 'uint8')
             byteBufferLength = byteBufferLength - shiftSize
@@ -278,9 +281,9 @@ def update():
     y = []
       
     # Read and parse the received data
-    dataOk, frameNumber, detObj = readAndParseData14xx(Dataport, configParameters)
+    dataOk, frameNumber, detObj = readAndParseData16xx(Dataport, configParameters)
     
-    if dataOk and len(detObj["x"]) > 0:
+    if dataOk and len(detObj["x"])>0:
         #print(detObj)
         x = -detObj["x"]
         y = detObj["y"]
@@ -293,45 +296,47 @@ def update():
 
 # -------------------------    MAIN   -----------------------------------------  
 
-if __name__=="__main__":
-    # Configurate the serial port
-    CLIport, Dataport = serialConfig(configFileName)
+# Configurate the serial port
+CLIport, Dataport = serialConfig(configFileName)
 
-    # Get the configuration parameters from the configuration file
-    configParameters = parseConfigFile(configFileName)
+# Get the configuration parameters from the configuration file
+configParameters = parseConfigFile(configFileName)
 
-    # START QtAPPfor the plot
-    app = QtGui.QApplication([])
+# START QtAPPfor the plot
+app = QtGui.QApplication([])
 
-    # Set the plot 
-    pg.setConfigOption('background','w')
-    win = pg.GraphicsWindow(title="2D scatter plot")
-    p = win.addPlot()
-    p.setXRange(-0.5,0.5)
-    p.setYRange(0,1.5)
-    p.setLabel('left',text = 'Y position (m)')
-    p.setLabel('bottom', text= 'X position (m)')
-    s = p.plot([],[],pen=None,symbol='o')
-
-    detObj = {}  
-    frameData = {}    
-    currentIndex = 0
-    while True:
-        try:
-            # Update the data and check if the data is okay
-            dataOk = update()
-            
-            if dataOk:
-                # Store the current frame into frameData
-                frameData[currentIndex] = detObj
-                currentIndex += 1
-            
-            time.sleep(0.033) # Sampling frequency of 30 Hz
-            
-        # Stop the program and close everything if Ctrl + c is pressed
-        except KeyboardInterrupt:
-            CLIport.write(('sensorStop\n').encode())
-            CLIport.close()
-            Dataport.close()
-            win.close()
-            break
+# Set the plot 
+pg.setConfigOption('background','w')
+win = pg.GraphicsLayoutWidget(title="2D scatter plot")
+p = win.addPlot()
+p.setXRange(-0.5,0.5)
+p.setYRange(0,3)
+p.setLabel('left',text = 'Y position (m)')
+p.setLabel('bottom', text= 'X position (m)')
+s = p.plot([],[],pen=None,symbol='o')
+win.show()
+    
+   
+# Main loop 
+detObj = {}  
+frameData = {}    
+currentIndex = 0
+while True:
+    try:
+        # Update the data and check if the data is okay
+        dataOk = update()
+        
+        if dataOk:
+            # Store the current frame into frameData
+            frameData[currentIndex] = detObj
+            currentIndex += 1
+        
+        time.sleep(0.03) # Sampling frequency of 30 Hz
+        
+    # Stop the program and close everything if Ctrl + c is pressed
+    except KeyboardInterrupt:
+        CLIport.write(('sensorStop\n').encode())
+        CLIport.close()
+        Dataport.close()
+        win.close()
+        break
