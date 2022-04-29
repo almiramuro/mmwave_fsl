@@ -10,7 +10,7 @@ configFileName = '1443config.cfg'
 CLIport = {}
 Dataport = {}
 byteBuffer = np.zeros(2**15,dtype = 'uint8')
-byteBufferLength = 0
+byteBufferLength = 0;
 
 
 # ------------------------------------------------------------------
@@ -64,21 +64,21 @@ def parseConfigFile(configFileName):
             rampEndTime = float(splitWords[5])
             freqSlopeConst = float(splitWords[8])
             numAdcSamples = int(splitWords[10])
-            numAdcSamplesRoundTo2 = 1
+            numAdcSamplesRoundTo2 = 1;
             
             while numAdcSamples > numAdcSamplesRoundTo2:
-                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2
+                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2;
                 
-            digOutSampleRate = int(splitWords[11])
+            digOutSampleRate = int(splitWords[11]);
             
         # Get the information about the frame configuration    
         elif "frameCfg" in splitWords[0]:
             
-            chirpStartIdx = int(splitWords[1])
-            chirpEndIdx = int(splitWords[2])
-            numLoops = int(splitWords[3])
-            numFrames = int(splitWords[4])
-            framePeriodicity = int(splitWords[5])
+            chirpStartIdx = int(splitWords[1]);
+            chirpEndIdx = int(splitWords[2]);
+            numLoops = int(splitWords[3]);
+            numFrames = int(splitWords[4]);
+            framePeriodicity = int(splitWords[5]);
 
             
     # Combine the read data to obtain the configuration parameters           
@@ -100,11 +100,11 @@ def readAndParseData14xx(Dataport, configParameters):
     global byteBuffer, byteBufferLength
     
     # Constants
-    OBJ_STRUCT_SIZE_BYTES = 12
-    BYTE_VEC_ACC_MAX_SIZE = 2**15
-    MMWDEMO_UART_MSG_DETECTED_POINTS = 1
-    MMWDEMO_UART_MSG_RANGE_PROFILE   = 2
-    maxBufferSize = 2**15
+    OBJ_STRUCT_SIZE_BYTES = 12;
+    BYTE_VEC_ACC_MAX_SIZE = 2**15;
+    MMWDEMO_UART_MSG_DETECTED_POINTS = 1;
+    MMWDEMO_UART_MSG_RANGE_PROFILE   = 2;
+    maxBufferSize = 2**15;
     magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
     
     # Initialize variables
@@ -276,7 +276,6 @@ def update():
     global detObj
     x = []
     y = []
-    z = []
       
     # Read and parse the received data
     dataOk, frameNumber, detObj = readAndParseData14xx(Dataport, configParameters)
@@ -285,9 +284,8 @@ def update():
         #print(detObj)
         x = -detObj["x"]
         y = detObj["y"]
-        z = detObj["z"]
         
-        s.setData(x,y,z)
+        s.setData(x,y)
         QtGui.QApplication.processEvents()
     
     return dataOk
@@ -311,10 +309,9 @@ if __name__=="__main__":
     p = win.addPlot()
     p.setXRange(-0.5,0.5)
     p.setYRange(0,1.5)
-    p.setZRange(0,1.5)
     p.setLabel('left',text = 'Y position (m)')
     p.setLabel('bottom', text= 'X position (m)')
-    s = p.plot([],[],[],pen=None,symbol='o')
+    s = p.plot([],[],pen=None,symbol='o')
 
     detObj = {}  
     frameData = {}    
