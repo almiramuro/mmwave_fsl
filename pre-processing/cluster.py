@@ -1,13 +1,13 @@
 ﻿import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
-import json
 import pickle
 
 def cluster_wcolor(extractedPts, e = 0.1, min_samp = 3):
     """
-        extractedPts: type = ndarray (n x 3)
-        with colors --> for realtime nalang
+        input:              extractedPts    #ndarray (n x 3)
+        output:             xyzc            #dictionary with key = color; value = coordinates
+        ---with colors --> for realtime
     """
 
     db = DBSCAN(eps=e, min_samples=min_samp).fit(extractedPts)
@@ -32,13 +32,12 @@ def cluster_wcolor(extractedPts, e = 0.1, min_samp = 3):
         xyz = np.vstack((xyz,extractedPts[class_member_mask & ~core_samples_mask]))
         xyzc[col] = xyz
     
-    # for col, pt in xyzc.items(): 
-    #     print(col,':\n',pt,'\n---------------')
 
 def cluster(extractedPts, e = 0.1, min_samp = 3):
     """
-        extractedPts: type = ndarray (n x 3)
-        without colors
+        input:              extractedPts    #ndarray (n x 3)
+        output:             xyzc            #dictionary with key = cluster; value = coordinates
+        ---without colors
     """
     
     db = DBSCAN(eps=e, min_samples=min_samp).fit(extractedPts)
@@ -47,8 +46,7 @@ def cluster(extractedPts, e = 0.1, min_samp = 3):
 
     labels = db.labels_
     unique_labels = set(labels)
-    colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
-    
+
     xyzc = dict()
 
     for k in unique_labels:
@@ -58,9 +56,10 @@ def cluster(extractedPts, e = 0.1, min_samp = 3):
         
         xyz = np.vstack((xyz,extractedPts[class_member_mask & ~core_samples_mask]))
         xyzc[k] = xyz
-
-    for k, pt in xyzc.items(): 
-        print(k,':\n',pt,'\n---------------')
+    
+    # for k, pt in xyzc.items(): 
+    #     print(k,':\n',pt,'\n---------------')
+    return xyzc
 
 if __name__=="__main__":
 
@@ -68,5 +67,5 @@ if __name__=="__main__":
         pm_contents = pickle.load(pm_data,encoding ="bytes")
     
     for ts, pts in pm_contents.items():
-        print('time: ',ts)
+        # print('time: ',ts)
         cluster(pts, e = 0.1)
