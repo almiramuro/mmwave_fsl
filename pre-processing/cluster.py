@@ -57,8 +57,8 @@ def cluster(extractedPts, e = 0.1, min_samp = 3):
         xyz = np.vstack((xyz,extractedPts[class_member_mask & ~core_samples_mask]))
         xyzc[k] = xyz
     
-    # for k, pt in xyzc.items(): 
-    #     print(k,':\n',pt,'\n---------------')
+    for k, pt in xyzc.items(): 
+        print(k,':\n',pt,'\n---------------')
     return xyzc
 
 if __name__=="__main__":
@@ -67,5 +67,5 @@ if __name__=="__main__":
         pm_contents = pickle.load(pm_data,encoding ="bytes")
     
     for ts, pts in pm_contents.items():
-        # print('time: ',ts)
+        print('time: ',ts)
         cluster(pts, e = 0.1)
