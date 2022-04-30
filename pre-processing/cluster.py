@@ -33,7 +33,7 @@ def cluster_wcolor(extractedPts, e = 0.1, min_samp = 3):
         xyzc[col] = xyz
     
 
-def cluster(extractedPts, e = 0.1, min_samp = 3):
+def start_cluster(extractedPts, e = 0.1, min_samp = 3):
     """
         input:              extractedPts    #ndarray (n x 3)
         output:             xyzc            #dictionary with key = cluster; value = coordinates
@@ -68,4 +68,4 @@ if __name__=="__main__":
     
     for ts, pts in pm_contents.items():
         print('time: ',ts)
-        cluster(pts, e = 0.1)
+        start_cluster(pts, e = 0.1)
