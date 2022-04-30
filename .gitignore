@@ -3,3 +3,6 @@ Lib
 Scripts
 pyvenv.cfg
 *.pyc
+share
+etc
+.ipynb_checkpoints
