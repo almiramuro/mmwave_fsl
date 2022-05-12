@@ -1,5 +1,7 @@
 ﻿import serial
 import time
+import datetime
+import pickle
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -29,13 +31,13 @@ def serialConfig(configFileName):
     global Dataport
     # Open the serial ports for the configuration and the data ports
     
-    # Raspberry pi
-    # CLIport = serial.Serial('/dev/ttyACM0', 115200)
-    # Dataport = serial.Serial('/dev/ttyACM1', 921600)
+    # MAC
+    CLIport = serial.Serial('/dev/tty.usbmodemR10310411', 115200)
+    Dataport = serial.Serial('/dev/tty.usbmodemR10310414', 921600)
     
     # Windows
-    CLIport = serial.Serial('COM4', 115200)
-    Dataport = serial.Serial('COM5', 921600)
+    # CLIport = serial.Serial('COM4', 115200)
+    # Dataport = serial.Serial('COM5', 921600)
 
     # Read the configuration file and send it to the board
     config = [line.rstrip('\r\n') for line in open(configFileName)]
@@ -249,13 +251,14 @@ def readAndParseData16xx(Dataport, configParameters):
                 #x[x > 32767] = x[x > 32767] - 65536
                 #y[y > 32767] = y[y > 32767] - 65536
                 #z[z > 32767] = z[z > 32767] - 65536
+                print(tlv_xyzQFormat)
                 x = x / tlv_xyzQFormat
                 y = y / tlv_xyzQFormat
                 z = z / tlv_xyzQFormat
                 
                 # Store the data in the detObj dictionary
                 detObj = {"numObj": tlv_numObj, "rangeIdx": rangeIdx, "range": rangeVal, "dopplerIdx": dopplerIdx, \
-                          "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z}
+                          "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z, "ts": str(int(time.time()*1000))}
                 
                 dataOK = 1
        
@@ -314,49 +317,53 @@ def update():
     
     return dataOk
 
+def formatData():
+
+    frameData[detObj["ts"]] = np.dstack([detObj["x"], detObj["y"], detObj["z"]])[0]
+
+def log(filename, data):
+    with open(filename, 'wb') as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 # -------------------------    MAIN   -----------------------------------------  
 
-if __name__ == '__main__':
-    # Configurate the serial port
-    CLIport, Dataport = serialConfig(configFileName)
+# Configurate the serial port
+CLIport, Dataport = serialConfig(configFileName)
 
-    # Get the configuration parameters from the configuration file
-    configParameters = parseConfigFile(configFileName)
+# Get the configuration parameters from the configuration file
+configParameters = parseConfigFile(configFileName)
 
-    fps = 30
-    dt = 1 / fps
+# START QtAPPfor the plot
+app = QtGui.QApplication([])
 
-    range_max = 3.0
-    d = range_max
+# Set the plot 
+pg.setConfigOption('background','w')
+win = pg.GraphicsLayoutWidget(title="2D scatter plot")
+p = win.addPlot()
+p.setXRange(-0.5,0.5)
+p.setYRange(0,3)
+p.setLabel('left',text = 'Y position (m)')
+p.setLabel('bottom', text= 'X position (m)')
+s = p.plot([],[],pen=None,symbol='o')
+win.show()
+    
+   
+# Main loop 
+detObj = {}  
+frameData = {}    
+currentIndex = 0
+while True:
+    try:
+        # Update the data and check if the data is okay
+        dataOk = update()
+        
+        if dataOk:
+            # Store the current frame into frameData
+            # frameData[currentIndex] = detObj
+            formatData()
 
-    fig = plt.figure(figsize=(6,6))
-    ax = fig.add_subplot(projection='3d')
-    # ax = plt.subplot(1, 1, 1, projection='3d') 
-
-    # ax.view_init(azim=-45, elev=15)
-
-    ax.set_xlabel('x [m]')
-    ax.set_ylabel('y [m]')
-    ax.set_zlabel('z [m]')
-
-    ax.set_xlim3d((-d / 2, +d / 2))
-    ax.set_ylim3d((0, d))
-    ax.set_zlim3d((-d / 2, +d / 2))
-
-    fig.canvas.draw()
-
-    plt.show(block=False)
-
-    # ax.xaxis.pane.fill = False
-    # ax.yaxis.pane.fill = False
-    # ax.zaxis.pane.fill = False
-
-    # ax.xaxis._axinfo['grid']['linestyle'] = ':'
-    # ax.yaxis._axinfo['grid']['linestyle'] = ':'
-    # ax.zaxis._axinfo['grid']['linestyle'] = ':'
-
-    # fig.tight_layout(pad=1)
+            currentIndex += 1
         
     # ax.scatter(xs=[], ys=[], zs=[], marker='.', cmap='jet')
 
@@ -394,31 +401,15 @@ if __name__ == '__main__':
     # s = p.plot([],[],pen=None,symbol='o')
     # win.show()
         
-    
-    # Main loop 
-    detObj = {}  
-    frameData = {}    
-    currentIndex = 0
-    while True:
-        try:
-            # Update the data and check if the data is okay
-            dataOk = update()
-            # plt.show(block=False)
-            
-            if dataOk:
-                # Store the current frame into frameData
-                frameData[currentIndex] = detObj
-                currentIndex += 1
+    # Stop the program and close everything if Ctrl + c is pressed
+    except KeyboardInterrupt:
+        CLIport.write(('sensorStop\n').encode())
+        CLIport.close()
+        Dataport.close()
+        win.close()
+        break
 
-                fig.canvas.draw_idle()
-            
-            time.sleep(dt) # FPS
-            
-        # Stop the program and close everything if Ctrl + c is pressed
-        except KeyboardInterrupt:
-            CLIport.write(('sensorStop\n').encode())
-            CLIport.close()
-            Dataport.close()
-            plt.clf()
-            # win.close()
-            break
+# print(frameData)
+
+filename = "raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl'
+log(filename, frameData)
