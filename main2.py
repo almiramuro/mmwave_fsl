@@ -1,9 +1,8 @@
-﻿import serial
+import serial
 import time
 import datetime
 import pickle
 import numpy as np
-import threading
 
 from interface import *
 from PyQt5.QtCore import *
@@ -306,29 +305,11 @@ def update(configParameters):
 
         for i in range(detObj["x"].size):
             x, y, z = detObj["x"][i], detObj["y"][i], detObj["z"][i]
-            
-            # if xm[0] <= x <= xm[1] and ym[0] <= y <= ym[1] and zm[0] <= z <= zm[1]:
-            # print(x)
-
-            # pt = Point((x, y, z), size=3, marker='.')
-            # ax.add_artist(pt)
-
-            # ax.plot3D([x], [y], [z], 'bo')
-
-
-        # x = -detObj["x"]
-        # y = detObj["y"]
-        
-        # s.setData(x,y)
-        # QtGui.QApplication.processEvents()
     
     return dataOk
 
-def formatData(frameData):
+def formatData():
     frameData[detObj["ts"]] = np.dstack([detObj["x"], detObj["y"], detObj["z"]])[0]
-    print(frameData[detObj["ts"]])
-
-    return frameData
 
 def log(filename, data):
     with open(filename, 'wb') as handle:
@@ -368,7 +349,7 @@ def main():
             if dataOk:
                 # Store the current frame into frameData
                 # frameData[currentIndex] = detObj
-                frameData = formatData(frameData)
+                formatData()
 
                 currentIndex += 1
             
@@ -417,21 +398,16 @@ def main():
             # win.close()
             break
             
-        # print(frameData)
+        print(frameData)
 
 
 if __name__ == '__main__':
-    try:
-        t = threading.Thread(target=main, args=())
-        t.start()
+    app = QApplication([])
+    ex = App()
 
-        app = QApplication([])
-        ex = App()
-        sys.exit(app.exec_())
-    finally:
-        CLIport.write(('sensorStop\n').encode())
-        CLIport.close()
-        Dataport.close()
+    QTimer.singleShot(0, main)
+
+    sys.exit(app.exec_())
 
 # filename = "raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl'
 # log(filename, frameData)

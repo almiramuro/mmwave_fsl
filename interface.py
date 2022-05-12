@@ -1,7 +1,9 @@
+from ctypes import alignment
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui
 import sys
+import datetime
 
 class Stream(QObject):
     '''For outputting terminal in GUI'''
@@ -99,12 +101,18 @@ class App(QDialog):
         self.rec_button = QPushButton('Rec/Stop')
         self.rec_button.clicked.connect(self.clicked)
         
+        self.filename_label = QLabel(self, alignment=Qt.AlignLeft)
+        self.filename_label.setText('Filename will be shown here upon recording')
+        
         recordHbox.addWidget(self.rec_button)
+        recordHbox.addWidget(QLabel(text='Filename: ', alignment=Qt.AlignRight))
+        recordHbox.addWidget(self.filename_label)
         self.recordGroupBox.setLayout(recordHbox)
 
 
     def clicked(self):
-        print('clicked!')
+        print('Filename updated')
+        self.filename_label.setText("raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl')
 
     def center(self):
         """centers the window on the screen"""
@@ -115,9 +123,9 @@ class App(QDialog):
 
     
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = App()
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     ex = App()
 
-    # behaviour to trigger on exit
-    sys.exit(app.exec_())
+#     # behaviour to trigger on exit
+#     sys.exit(app.exec_())
