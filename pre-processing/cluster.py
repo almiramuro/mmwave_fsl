@@ -23,7 +23,8 @@ def cluster_wcolor(extractedPts, e = 0.1, min_samp = 3):
     for k, col in zip(unique_labels, colors):
         if k == -1:
             # Black used for noise.
-            col = (0, 0, 0, 1)
+            continue
+            # col = (0, 0, 0, 1)
 
         class_member_mask = labels == k
 
@@ -31,6 +32,8 @@ def cluster_wcolor(extractedPts, e = 0.1, min_samp = 3):
         
         xyz = np.vstack((xyz,extractedPts[class_member_mask & ~core_samples_mask]))
         xyzc[col] = xyz
+
+    return xyzc
     
 
 def start_cluster(extractedPts, e = 0.1, min_samp = 3):
@@ -51,21 +54,25 @@ def start_cluster(extractedPts, e = 0.1, min_samp = 3):
 
     for k in unique_labels:
         class_member_mask = labels == k
-
+        if k == -1: continue
         xyz = extractedPts[class_member_mask & core_samples_mask]
         
         xyz = np.vstack((xyz,extractedPts[class_member_mask & ~core_samples_mask]))
         xyzc[k] = xyz
     
-    for k, pt in xyzc.items(): 
-        print(k,':\n',pt,'\n---------------')
+    # for k, pt in xyzc.items(): 
+    #     print(k,':\n',pt,'\n---------------')
     return xyzc
 
 if __name__=="__main__":
 
     with open('raw_2022-04-30_15-04-31.pkl',"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
-    
+    l = 0
+    print(len(pm_contents.items()))
     for ts, pts in pm_contents.items():
-        print('time: ',ts)
-        start_cluster(pts, e = 0.1)
+    #     l += len(pts)
+        
+    # print(l)
+        print(cluster_wcolor(pts, e = 0.1))
+        break
