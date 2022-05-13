@@ -417,21 +417,24 @@ def main():
             # win.close()
             break
             
-        # print(frameData)
+        print(frameData)
 
 
 if __name__ == '__main__':
-    try:
-        t = threading.Thread(target=main, args=())
-        t.start()
+    
+    # t = threading.Thread(target=main, args=())
+    # t.start()
 
-        app = QApplication([])
-        ex = App()
-        sys.exit(app.exec_())
-    finally:
-        CLIport.write(('sensorStop\n').encode())
-        CLIport.close()
-        Dataport.close()
+    app = QApplication([])
+    ex = App()
+    ret = app.exec_()
+
+    CLIport.write(('sensorStop\n').encode())
+    CLIport.close()
+    Dataport.close()
+
+    sys.exit(ret)
+        
 
 # filename = "raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl'
 # log(filename, frameData)
