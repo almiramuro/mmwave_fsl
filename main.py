@@ -3,6 +3,8 @@ import time
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
+import pickle
+import datetime
 
 # Change the configuration file name
 configFileName = '2m_radar_config.cfg'
@@ -24,13 +26,13 @@ def serialConfig(configFileName):
     global Dataport
     # Open the serial ports for the configuration and the data ports
     
-    # Raspberry pi
-    # CLIport = serial.Serial('/dev/ttyACM0', 115200)
-    # Dataport = serial.Serial('/dev/ttyACM1', 921600)
+    # MAC
+    CLIport = serial.Serial('/dev/tty.usbmodemR10310411', 115200)
+    Dataport = serial.Serial('/dev/tty.usbmodemR10310414', 921600)
     
     # Windows
-    CLIport = serial.Serial('COM4', 115200)
-    Dataport = serial.Serial('COM5', 921600)
+    # CLIport = serial.Serial('COM4', 115200)
+    # Dataport = serial.Serial('COM5', 921600)
 
     # Read the configuration file and send it to the board
     config = [line.rstrip('\r\n') for line in open(configFileName)]
@@ -250,7 +252,7 @@ def readAndParseData16xx(Dataport, configParameters):
                 
                 # Store the data in the detObj dictionary
                 detObj = {"numObj": tlv_numObj, "rangeIdx": rangeIdx, "range": rangeVal, "dopplerIdx": dopplerIdx, \
-                          "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z}
+                          "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z, "ts": str(int(time.time()))}
                 
                 dataOK = 1
        
@@ -284,14 +286,25 @@ def update():
     dataOk, frameNumber, detObj = readAndParseData16xx(Dataport, configParameters)
     
     if dataOk and len(detObj["x"])>0:
+        for i in range(detObj["x"].size):
+            x, y, z = detObj["x"][i], detObj["y"][i], detObj["z"][i]
+
         #print(detObj)
-        x = -detObj["x"]
-        y = detObj["y"]
+        # x = -detObj["x"]
+        # y = detObj["y"]
         
-        s.setData(x,y)
-        QtGui.QApplication.processEvents()
+        # s.setData(x,y)
+        # QtGui.QApplication.processEvents()
     
     return dataOk
+
+def formatData():
+    frameData[detObj["ts"]] = np.dstack([detObj["x"], detObj["y"], detObj["z"]])[0]
+
+
+def log(filename, data):
+    with open(filename, 'wb') as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 # -------------------------    MAIN   -----------------------------------------  
@@ -328,7 +341,9 @@ while True:
         
         if dataOk:
             # Store the current frame into frameData
-            frameData[currentIndex] = detObj
+            # frameData[currentIndex] = detObj
+            formatData()
+
             currentIndex += 1
         
         time.sleep(0.03) # Sampling frequency of 30 Hz
@@ -340,3 +355,8 @@ while True:
         Dataport.close()
         win.close()
         break
+
+    print(frameData)
+
+filename = "raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl'
+log(filename, frameData)
