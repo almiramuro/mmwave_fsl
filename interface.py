@@ -70,7 +70,6 @@ class App(QDialog):
         try:
             self.reader.stop()
             self.t.join()
-            self.reader.logFile()
         except AttributeError:
             pass
 
@@ -100,7 +99,7 @@ class App(QDialog):
         self.createTerminalGroupBox()
 
         # Record
-        self.recordGroupBox = QGroupBox('Buttons')
+        self.recordGroupBox = QGroupBox('Logging')
         self.createRecordGroupBox()
 
         leftLayout.addWidget(self.settingsGroupBox)
@@ -190,23 +189,24 @@ class App(QDialog):
         self.sensorIsRunning = True
         self.initializeButton.setEnabled(False)
         self.startStopButton.setEnabled(True)
+        self.rec_button.setEnabled(False)
 
     def startStopSensor(self):
         if self.sensorIsRunning:
             self.reader.CLIport.write(('sensorStop\n').encode())
             print('sensorStop')
             self.startStopButton.setText('Start Sensor')
+            self.rec_button.setEnabled(True)
 
         else:
             self.reader.CLIport.write(('sensorStart\n').encode())
             print('sensorStart')
             self.startStopButton.setText('Stop Sensor')
+            self.rec_button.setEnabled(False)
 
         self.sensorIsRunning = not self.sensorIsRunning
 
     # ----- END OF CONFIGURATION PART -----
-
-        
 
 
     def createTerminalGroupBox(self):
@@ -224,19 +224,24 @@ class App(QDialog):
     def createRecordGroupBox(self):
         recordHbox = QHBoxLayout()
 
-        self.rec_button = QPushButton('Rec/Stop')
-        self.rec_button.clicked.connect(self.clicked)
+        self.rec_button = QPushButton('Record Data')
+        self.rec_button.setCheckable(True)
+        self.rec_button.clicked[bool].connect(self.recordData)
         
-        self.filename_label = QLabel(self, text='Filename will be shown here upon recording', alignment=Qt.AlignLeft)
+        # self.filename_label = QLabel(self, text='Filename will be shown here upon recording', alignment=Qt.AlignLeft)
+        self.filenameTextBox = QLineEdit()
         
         recordHbox.addWidget(self.rec_button)
         recordHbox.addWidget(QLabel(text='Filename: ', alignment=Qt.AlignRight))
-        recordHbox.addWidget(self.filename_label)
+        recordHbox.addWidget(self.filen)
         self.recordGroupBox.setLayout(recordHbox)
 
 
-    def clicked(self):
-        print('Filename updated')
+    def recordData(self, pressed):
+        if pressed:
+            print('Data is being recorded')
+        else:
+            print('Data is not being recorded')
         self.filename_label.setText("raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl')
 
     def center(self):

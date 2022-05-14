@@ -241,9 +241,8 @@ class IWR1443_Reader:
                 if self.byteBufferLength < 0:
                     self.byteBufferLength = 0
 
-    def logFile(self):
-        filename = "raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl'
-        with open(filename, 'wb') as handle:
+    def logFile(self, filename="raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))):
+        with open(filename+'.pkl', 'wb') as handle:
             pickle.dump(self.frameData, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def plot(self):
