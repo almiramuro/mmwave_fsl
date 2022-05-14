@@ -3,13 +3,13 @@ import time
 import datetime
 import pickle
 import numpy as np
+import threading
 
-# from interface import *
-from PyQt5.QtCore import *
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import art3d
+import matplotlib.animation
+import pandas as pd
 
 #Constants
 
@@ -223,7 +223,8 @@ class IWR1443_Reader:
 
                     # Append detObj to frameData
                     self.frameData[self.detObj["ts"]] = np.dstack([self.detObj["x"], self.detObj["y"], self.detObj["z"]])[0]
-                    print(self.frameData[self.detObj["ts"]])
+                    # print(self.frameData[self.detObj["ts"]])
+                    print(self.detObj["x"])
                     # print('hello')
 
                     self.dataOK = 1
@@ -245,9 +246,42 @@ class IWR1443_Reader:
         with open(filename, 'wb') as handle:
             pickle.dump(self.frameData, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    def plot(self):
+        fig = plt.figure(figsize=(6,6))
+        ax = plt.subplot(111, projection='3d')
+        ax.view_init(azim=-45, elev=15)
+
+        ax.set_xlim3d((-3, 3))
+        ax.set_ylim3d((-3, 3))
+        ax.set_zlim3d((-3, 3))
+
+        ax.scatter(xs=[], ys=[], zs=[], marker='.')
+
+        for child in ax.get_children():
+            if isinstance(child, art3d.Path3DCollection):
+                child.remove()
+
+        # start_plot(fig, ax, update, 4)
+        fig.canvas.draw()
+
+        plt.show(block=False)
+
+        threading.Thread()
+
+
+
+
+    # def update_plot(self):
+    #     self.x = self.detObj["x"]
+    #     self.y = self.detObj["y"]
+    #     self.z = self.detObj["z"]
+    #     self.graph._offsets3d = (self.x, self.y, self.z)
+    #     return self.graph,
+
     def loop(self):
         self.start_time = time.time()
         self.loop_running = True
+        # self.plot()
         while self.loop_running:
             try:
                 self.readData()
