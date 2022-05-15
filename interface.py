@@ -273,6 +273,8 @@ class App(QDialog):
         self.startStopButton.setEnabled(False)
         self.startStopButton.clicked.connect(self.startStopSensor)
 
+        self.rightAfterRecord = False
+
         terminalVbox.addWidget(self.process)
         terminalVbox.addWidget(self.startStopButton)
         self.terminalGroupBox.setLayout(terminalVbox)
