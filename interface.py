@@ -370,9 +370,14 @@ class App(QDialog):
         self.figure.clear()
 
         self.ax = self.figure.add_subplot(111, projection='3d')
-        self.ax.set_xlim3d(-3, 3)
-        self.ax.set_ylim3d(-3, 3)
-        self.ax.set_zlim3d(-3, 3)
+
+        self.ax.set_xlim3d(-2, 2)
+        self.ax.set_ylim3d(-2, 2)
+        self.ax.set_zlim3d(-2, 2)
+
+        self.ax.set_xlabel('X [m]')
+        self.ax.set_ylabel('Y [m]')
+        self.ax.set_zlabel('Z [m]')
 
         self.graph = self.ax.scatter([], [], [])
         

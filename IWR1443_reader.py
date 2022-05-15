@@ -290,9 +290,13 @@ class IWR1443_Reader:
         self.DATAport.close()
 
 if __name__ == '__main__':
-    configFileName = '1443config.cfg' 
-    CLIportPath = '/dev/tty.usbmodemR10310411'
-    DATAportPath = '/dev/tty.usbmodemR10310414'
+    # configFileName = '1443config.cfg' 
+    configFileName = './Test Configs/1maxv.cfg' 
+    CLIportPath = 'COM4'
+    DATAportPath = 'COM5'
+
+    # CLIportPath = '/dev/tty.usbmodemR10310411'
+    # DATAportPath = '/dev/tty.usbmodemR10310414'
 
     reader = IWR1443_Reader(configFileName, CLIportPath, DATAportPath)
     reader.loop() 
