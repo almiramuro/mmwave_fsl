@@ -1,8 +1,3 @@
-from asyncio.format_helpers import _format_args_and_kwargs
-from ctypes import alignment
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5 import QtGui
 import os.path
 import sys
 import datetime
@@ -10,6 +5,16 @@ import threading
 import platform
 import serial.tools.list_ports
 import time
+import pickle
+
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from PyQt5 import QtGui
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 import IWR1443_reader
 
@@ -148,14 +153,19 @@ class App(QDialog):
         leftLayout.addWidget(self.terminalGroupBox)
         leftLayout.addWidget(self.recordGroupBox)
 
-        # QVBoxLayout for plot
+        # QVBoxLayout for plot and plot settings
         rightLayout = QVBoxLayout()
+        
+        # Plot
         self.plotGroupBox = QGroupBox('Plot')
+        self.createPlotGroupBox()
 
+        # Plot settings
+        self.plotSettingsGroupBox = QGroupBox('Plot Settings')
+        self.createPlotSettingsGroupBox()
 
         rightLayout.addWidget(self.plotGroupBox)
-
-
+        rightLayout.addWidget(self.plotSettingsGroupBox)
 
         # Putting it together
         horizontalLayout.addLayout(leftLayout)
@@ -271,18 +281,24 @@ class App(QDialog):
         if self.sensorIsRunning:
             # Stop sensor
             self.reader.CLIport.write(('sensorStop\n').encode())
-
-            if self.rec_button.isChecked():
-                self.reader.logFile(filename=self.filenameTextBox.text())
-                print("Data successfully saved to '{}.pkl'".format(self.filenameTextBox.text()))
-
             print('sensorStop')
             self.startStopButton.setText('Start Sensor')
             self.rec_button.setEnabled(True)
 
+            # Log data
+            if self.rec_button.isChecked():
+                self.reader.logFile(filename=self.filenameTextBox.text())
+                print("Data successfully saved to '{}.pkl'".format(self.filenameTextBox.text()))
+                self.rec_button.click()
+
+
         else:
             # Start sensor
+            
+            # Reset data dictionary and timer
             self.reader.frameData = {}
+            self.reader.start_time = time.time()
+
             self.reader.CLIport.write(('sensorStart\n').encode())
             print('sensorStart')
             self.startStopButton.setText('Stop Sensor')
@@ -316,6 +332,83 @@ class App(QDialog):
             self.filenameTextBox.setEnabled(True)
             self.filenameTextBox.clear()
             print('Data is not being recorded; Filename is cleared')
+
+    # ----- PLOT PART -----
+
+    def createPlotGroupBox(self):
+        plotVBox = QVBoxLayout()
+
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.plotButton = QPushButton('Plot')
+        self.plotButton.clicked.connect(self.plotData)
+
+        plotVBox.addWidget(self.toolbar)
+        plotVBox.addWidget(self.canvas)
+        plotVBox.addWidget(self.plotButton)
+
+        self.plotGroupBox.setLayout(plotVBox)
+
+    def plotData(self):
+        # Disable buttons to prevent interrupting the plot
+        self.plotButton.setEnabled(False)
+        self.pklFileButton.setEnabled(False)
+
+        # Plot data
+        self.figure.clear()
+
+        self.ax = self.figure.add_subplot(111, projection='3d')
+        self.ax.set_xlim3d(-3, 3)
+        self.ax.set_ylim3d(-3, 3)
+        self.ax.set_zlim3d(-3, 3)
+
+        self.graph = self.ax.scatter([], [], [])
+        
+        self.ani = FuncAnimation(self.figure, self.updatePlot, self.timestamps, interval=33, blit=False, repeat=False)
+
+        self.canvas.draw()
+
+    def updatePlot(self, timestamp):
+        xs = self.data[timestamp][:,0]
+        ys = self.data[timestamp][:,1]
+        zs = self.data[timestamp][:,2]
+        
+        self.graph._offsets3d = (xs, ys, zs)
+        self.ax.set_title('Timestamp: {}'.format(timestamp))
+
+        if timestamp == self.timestamps[len(self.timestamps)-1]:
+            print("Animation done")
+            self.plotButton.setEnabled(True)
+            self.pklFileButton.setEnabled(True)
+
+    # ----- END OF PLOT PART -----
+
+    # ----- PLOT SETTINGS PART -----
+
+    def createPlotSettingsGroupBox(self):
+        plotSettingsHBox = QHBoxLayout()
+
+        self.pklFileButton = QPushButton('Load .pkl File')
+        self.pklFileButton.clicked.connect(self.loadPklFile)
+        self.pklFileLabel = QLabel(text='pkl Filename', alignment=Qt.AlignCenter)
+
+        plotSettingsHBox.addWidget(self.pklFileButton)
+        plotSettingsHBox.addWidget(self.pklFileLabel)
+
+        self.plotSettingsGroupBox.setLayout(plotSettingsHBox)
+
+    def loadPklFile(self):
+        self.pklFileName, _ = QFileDialog.getOpenFileName(self, 'Open PKL File', './', 'PKL Files (*.pkl)')
+        self.pklFileLabel.setText(self.pklFileName)
+        print("PKL file '{}' loaded".format(self.pklFileName))
+
+        with open(self.pklFileName, 'rb') as handle:
+            self.data = pickle.load(handle)
+        
+        self.timestamps = list(self.data.keys())
+
+    # ----- END OF PLOT SETTINGS PART -----
 
     def center(self):
         """centers the window on the screen"""

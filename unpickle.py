@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import matplotlib.animation
 
 
-filename = 'raw_2022-05-15_10-51-16.pkl'
+filename = 'raw_2022-05-15_12-30-49.pkl'
 with open(filename, 'rb') as handle:
     data = pickle.load(handle)
 
