@@ -70,7 +70,7 @@ class App(QDialog):
         if os.path.isfile('./' + DEFAULT_CONFIG_FILE):
             self.configFileName = DEFAULT_CONFIG_FILE
             self.configFileLabel.setText(self.configFileName)
-            print("'{}' selected as config file".format(self.configFileName))
+            print("[BOARD CONFIG] '{}' selected as config file".format(self.configFileName))
 
             configFileSet = True
 
@@ -222,11 +222,11 @@ class App(QDialog):
         
     def selectCLIPort(self):
         self.CLIportPath = self.CLIportComboBox.currentText()
-        print('{} is selected as the CLI Port'.format(self.CLIportPath))
+        print('[BOARD CONFIG] {} is selected as the CLI Port'.format(self.CLIportPath))
 
     def selectDATAPort(self):
         self.DATAportPath = self.DATAportComboBox.currentText()
-        print('{} is selected as the DATA Port'.format(self.DATAportPath))
+        print('[BOARD CONFIG] {} is selected as the DATA Port'.format(self.DATAportPath))
 
     def getConfigFile(self):
         self.configFileName, _ = QFileDialog.getOpenFileName(self, 'Open Config File', './' + DEFAULT_CONFIG_FILE, 'Config Files (*.cfg)')
@@ -234,13 +234,13 @@ class App(QDialog):
             if os.path.isfile('./' + DEFAULT_CONFIG_FILE):
                 self.configFileName = DEFAULT_CONFIG_FILE
                 self.configFileLabel.setText(self.configFileName)
-                print("'{}' selected as config file by default".format(self.configFileName))
+                print("[BOARD CONFIG] '{}' selected as config file by default".format(self.configFileName))
             else:
                 self.configFileLabel.setText('No Config File Selected')
-                print('Please select a config file')
+                print('[BOARD CONFIG] Please select a config file')
         else:
             self.configFileLabel.setText(self.configFileName)
-            print("'{}' selected as config file".format(self.configFileName))
+            print("[BOARD CONFIG] '{}' selected as config file".format(self.configFileName))
             self.initializeButton.setEnabled(True)
 
     def initializeSensor(self):
@@ -254,7 +254,7 @@ class App(QDialog):
             self.DATAportComboBox.setEnabled(False)
             self.configFileButton.setEnabled(False)
         except:
-            print("Error initializing sensor")
+            print("[BOARD CONFIG] Error initializing sensor")
 
     # ----- END OF CONFIGURATION PART -----
 
@@ -281,15 +281,24 @@ class App(QDialog):
         if self.sensorIsRunning:
             # Stop sensor
             self.reader.CLIport.write(('sensorStop\n').encode())
-            print('sensorStop')
+            print('[BOARD] sensorStop')
             self.startStopButton.setText('Start Sensor')
             self.rec_button.setEnabled(True)
 
             # Log data
             if self.rec_button.isChecked():
-                self.reader.logFile(filename=self.filenameTextBox.text())
-                print("Data successfully saved to '{}.pkl'".format(self.filenameTextBox.text()))
+                # Log file
+                self.filename = self.filenameTextBox.text()
+                self.reader.logFile(filename=self.filename)
+                print("[DATA LOGGING] Data successfully saved to '{}.pkl'".format(self.filename))
                 self.rec_button.click()
+                
+                # Plot logged file
+                self.rightAfterRecord = True
+                self.pklFileLabel.setText(self.filename+'.pkl')
+                self.loadPklFile()
+                self.rightAfterRecord = False
+
 
 
         else:
@@ -300,7 +309,7 @@ class App(QDialog):
             self.reader.start_time = time.time()
 
             self.reader.CLIport.write(('sensorStart\n').encode())
-            print('sensorStart')
+            print('[BOARD] sensorStart')
             self.startStopButton.setText('Stop Sensor')
             self.rec_button.setEnabled(False)
 
@@ -326,12 +335,12 @@ class App(QDialog):
         if pressed:
             if self.filenameTextBox.text() == '':
                 self.filenameTextBox.setText("raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
-            print("Data is being recorded with the filename '{}.pkl'".format(self.filenameTextBox.text()))
+            print("[DATA LOGGING] Data is being recorded with the filename '{}.pkl'".format(self.filenameTextBox.text()))
             self.filenameTextBox.setEnabled(False)
         else:
             self.filenameTextBox.setEnabled(True)
             self.filenameTextBox.clear()
-            print('Data is not being recorded; Filename is cleared')
+            print('[DATA LOGGING] Data is not being recorded; Filename is cleared')
 
     # ----- PLOT PART -----
 
@@ -378,7 +387,7 @@ class App(QDialog):
         self.ax.set_title('Timestamp: {}'.format(timestamp))
 
         if timestamp == self.timestamps[len(self.timestamps)-1]:
-            print("Animation done")
+            print("[PLOTTING] Animation done")
             self.plotButton.setEnabled(True)
             self.pklFileButton.setEnabled(True)
 
@@ -399,9 +408,16 @@ class App(QDialog):
         self.plotSettingsGroupBox.setLayout(plotSettingsHBox)
 
     def loadPklFile(self):
-        self.pklFileName, _ = QFileDialog.getOpenFileName(self, 'Open PKL File', './', 'PKL Files (*.pkl)')
-        self.pklFileLabel.setText(self.pklFileName)
-        print("PKL file '{}' loaded".format(self.pklFileName))
+        if self.rightAfterRecord:
+            self.pklFileName = self.pklFileLabel.text()
+        else:
+            self.pklFileName, _ = QFileDialog.getOpenFileName(self, 'Open PKL File', './', 'PKL Files (*.pkl)')
+            if self.pklFileName == '':
+                print('[PLOT SETTINGS] No pkl file selected')
+                return
+            self.pklFileLabel.setText(self.pklFileName)
+        
+        print("[PLOT SETTINGS] PKL file '{}' loaded".format(self.pklFileName))
 
         with open(self.pklFileName, 'rb') as handle:
             self.data = pickle.load(handle)
