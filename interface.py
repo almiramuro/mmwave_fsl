@@ -3,9 +3,11 @@ from ctypes import alignment
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui
+import os.path
 import sys
 import datetime
 import threading
+import platform
 import serial.tools.list_ports
 
 import IWR1443_reader
@@ -28,9 +30,43 @@ class App(QDialog):
         self.top = 50
         self.width = 1024
         self.height = 768
+
         self.initUI()
 
         sys.stdout = Stream(newText=self.onUpdateText)
+
+        #Set default settings
+        portsSet, configFileSet = False, False
+
+        # Set serial ports by default
+        if platform.system() == 'Windows':
+            CLIportPath = 'COM4'
+            DATAportPath = 'COM5'
+        elif platform.system() == 'Darwin':
+            CLIportPath = '/dev/tty.usbmodemR10310411'
+            DATAportPath = '/dev/tty.usbmodemR10310414'
+
+        if CLIportPath in self.ports:
+            CLI_index = self.ports.index(CLIportPath)
+            DATA_index = self.ports.index(DATAportPath)
+
+            self.CLIportComboBox.setCurrentIndex(CLI_index)
+            self.DATAportComboBox.setCurrentIndex(DATA_index)
+
+            portsSet = True
+
+        # Set config file by default
+        if os.path.isfile('./1443config.cfg'):
+            self.configFileName = '1443config.cfg'
+            self.configFileLabel.setText(self.configFileName)
+            print("'{}' selected as config file".format(self.configFileName))
+
+            configFileSet = True
+
+        # Enable init buttons if ports and config file are set
+        if portsSet and configFileSet:
+            self.initializeButton.setEnabled(True)
+
 
     # ----- THREADING -----
 
@@ -133,11 +169,12 @@ class App(QDialog):
         self.DATAportComboBox = QComboBox()
         
         # Get available ports
-        ports = [port for port, _, _ in serial.tools.list_ports.comports()]
-        self.CLIportComboBox.addItems(ports)
+        self.ports = [port for port, _, _ in serial.tools.list_ports.comports()]
+
+        self.CLIportComboBox.addItems(self.ports)
         self.CLIportComboBox.currentIndexChanged.connect(self.selectCLIPort)
 
-        self.DATAportComboBox.addItems(ports)
+        self.DATAportComboBox.addItems(self.ports)
         self.DATAportComboBox.currentIndexChanged.connect(self.selectDATAPort)
 
         serialPortsHBox.addWidget(QLabel(text='CLI Port: ', alignment=Qt.AlignCenter))
@@ -158,12 +195,9 @@ class App(QDialog):
         startStopButtonsHBox = QHBoxLayout()
         self.initializeButton = QPushButton(text="Initialize Sensor")
         self.initializeButton.clicked.connect(self.initializeSensor)
-        self.startStopButton = QPushButton(text='Stop Sensor')
-        self.startStopButton.setEnabled(False)
-        self.startStopButton.clicked.connect(self.startStopSensor)
+        self.initializeButton.setEnabled(False)
 
         startStopButtonsHBox.addWidget(self.initializeButton)
-        startStopButtonsHBox.addWidget(self.startStopButton)
         
         settingsVBox.addLayout(serialPortsHBox)
         settingsVBox.addLayout(configFileHBox)
@@ -179,17 +213,48 @@ class App(QDialog):
         print('{} is selected as the DATA Port'.format(self.DATAportPath))
 
     def getConfigFile(self):
-        self.configFileName, _ = QFileDialog.getOpenFileName(self)
-        self.configFileLabel.setText(self.configFileName)
-        print("'{}' selected as config file".format(self.configFileName))
-        self.initializeButton.setEnabled(True)
+        self.configFileName, _ = QFileDialog.getOpenFileName(self, 'Open Config File', './1443config.cfg', 'Config Files (*.cfg)')
+        if self.configFileName == '':
+            self.configFileLabel.setText('No Config File Selected')
+            print('Please select a config file')
+        else:
+            self.configFileLabel.setText(self.configFileName)
+            print("'{}' selected as config file".format(self.configFileName))
+            self.initializeButton.setEnabled(True)
 
     def initializeSensor(self):
-        self.thread()
-        self.sensorIsRunning = True
-        self.initializeButton.setEnabled(False)
-        self.startStopButton.setEnabled(True)
-        self.rec_button.setEnabled(False)
+        try:
+            self.thread()
+            self.sensorIsRunning = True
+            self.initializeButton.setEnabled(False)
+            self.startStopButton.setEnabled(True)
+            self.rec_button.setEnabled(False)
+            self.CLIportComboBox.setEnabled(False)
+            self.DATAportComboBox.setEnabled(False)
+            self.configFileButton.setEnabled(False)
+        except:
+            print("Error initializing sensor")
+
+    # ----- END OF CONFIGURATION PART -----
+
+    # ----- TERMINAL PART -----
+
+    def createTerminalGroupBox(self):
+        terminalVbox = QVBoxLayout()
+
+        self.process = QTextEdit(self)
+        self.process.moveCursor(QtGui.QTextCursor.Start)
+        self.process.ensureCursorVisible()
+        # self.process.setLineWrapColumnOrWidth(500)
+        # self.process.setLineWrapMode(QTextEdit.FixedPixelWidth)
+
+        self.startStopButton = QPushButton(text='Stop Sensor')
+        self.startStopButton.setEnabled(False)
+        self.startStopButton.clicked.connect(self.startStopSensor)
+
+        terminalVbox.addWidget(self.process)
+        terminalVbox.addWidget(self.startStopButton)
+        self.terminalGroupBox.setLayout(terminalVbox)
 
     def startStopSensor(self):
         if self.sensorIsRunning:
@@ -206,20 +271,7 @@ class App(QDialog):
 
         self.sensorIsRunning = not self.sensorIsRunning
 
-    # ----- END OF CONFIGURATION PART -----
-
-
-    def createTerminalGroupBox(self):
-        terminalVbox = QVBoxLayout()
-
-        self.process = QTextEdit(self)
-        self.process.moveCursor(QtGui.QTextCursor.Start)
-        self.process.ensureCursorVisible()
-        # self.process.setLineWrapColumnOrWidth(500)
-        # self.process.setLineWrapMode(QTextEdit.FixedPixelWidth)
-
-        terminalVbox.addWidget(self.process)
-        self.terminalGroupBox.setLayout(terminalVbox)
+    # ----- END OF TERMINAL PART -----
 
     def createRecordGroupBox(self):
         recordHbox = QHBoxLayout()
@@ -232,17 +284,21 @@ class App(QDialog):
         self.filenameTextBox = QLineEdit()
         
         recordHbox.addWidget(self.rec_button)
-        recordHbox.addWidget(QLabel(text='Filename: ', alignment=Qt.AlignRight))
-        recordHbox.addWidget(self.filen)
+        recordHbox.addWidget(QLabel(text='Filename (.pkl): '))
+        recordHbox.addWidget(self.filenameTextBox)
         self.recordGroupBox.setLayout(recordHbox)
 
 
     def recordData(self, pressed):
         if pressed:
-            print('Data is being recorded')
+            if self.filenameTextBox.text() == '':
+                self.filenameTextBox.setText("raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
+            print("Data is being recorded with the filename '{}'".format(self.filenameTextBox.text()))
+            self.filenameTextBox.setEnabled(False)
         else:
+            self.filenameTextBox.setEnabled(True)
+            self.filenameTextBox.clear()
             print('Data is not being recorded')
-        self.filename_label.setText("raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) +'.pkl')
 
     def center(self):
         """centers the window on the screen"""

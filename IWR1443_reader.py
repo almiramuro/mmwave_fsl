@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
 import matplotlib.animation
-import pandas as pd
 
 #Constants
 
@@ -266,16 +265,6 @@ class IWR1443_Reader:
         plt.show(block=False)
 
         threading.Thread()
-
-
-
-
-    # def update_plot(self):
-    #     self.x = self.detObj["x"]
-    #     self.y = self.detObj["y"]
-    #     self.z = self.detObj["z"]
-    #     self.graph._offsets3d = (self.x, self.y, self.z)
-    #     return self.graph,
 
     def loop(self):
         self.start_time = time.time()
