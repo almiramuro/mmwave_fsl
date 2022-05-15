@@ -1,8 +1,9 @@
 ﻿import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-from cluster import *
 
+from lib.cluster import *
+from lib.plot import *
 """
     frame divider and resampling (need kasi ng PointNet++, let's see sa CNN)
 
@@ -10,39 +11,6 @@ from cluster import *
     time decay
     total # of frames = total # of timestamps (ask luis if pwede palitan yung format ng timestamps)
 """
-
-def plot3d(pts):
-    fig = plt.figure()
-    ax = fig.add_subplot(111,projection='3d')
-    ax.set_xlim3d(-2,2)
-    ax.set_ylim3d(0,3)
-    ax.set_zlim3d(-2,2)
-    ax.scatter(
-        pts[:, 0],
-        pts[:, 1],
-        pts[:, 2])
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    plt.show()
-
-def plot3d_col(xyzc):
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.set_xlim3d(-2,2)
-    ax.set_ylim3d(0,3)
-    ax.set_zlim3d(-2,2)
-    for col, pts in xyzc:        
-        ax.scatter3D(
-            pts[:, 0],
-            pts[:, 1],
-            pts[:, 2],
-            color = tuple(col))
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    plt.show()
-
 
 def decay(raw, k,f):
     # k = total # of points in a gesture
@@ -74,7 +42,7 @@ def decay(raw, k,f):
                     agg[fcount] = np.append(agg[fcount],pts,axis=0)
                 ptcount -= len(pts)
                 toDel.append(key)   # store used key to toDel array
-        print(ptcount)
+        # print(ptcount)
         fcount += 1
         
         # delete already processed keys
@@ -89,13 +57,15 @@ def decay(raw, k,f):
 
 if __name__=="__main__":
 
-    with open('raw_2022-04-30_15-04-31.pkl',"rb") as pm_data:
+    with open('hello1.pkl',"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
     
-    # print(pm_contents.items())
-    aggframes = decay(pm_contents, 670,2)
+    print('ORIG # OF frames:',len(pm_contents.items()))
+    for key, pts in pm_contents.items():
+        pm_contents[key] = normalize(pts)
+    aggframes = decay(pm_contents, 1000,3)
     # print(aggframes)
     for _, xyz in aggframes.items():
-        print('_:',_,'xyz:',xyz)
+        print('_:',_,'xyz:',len(xyz))
         clust = cluster_wcolor(xyz, e = 0.2)
         plot3d_col(clust.items())
