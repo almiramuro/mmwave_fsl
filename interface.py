@@ -9,8 +9,14 @@ import datetime
 import threading
 import platform
 import serial.tools.list_ports
+import time
 
 import IWR1443_reader
+
+# change these values depending on your machine for convenience
+DEFAULT_CONFIG_FILE = '1443config.cfg'
+DEFAULT_CLI_PORT = 'COM4'
+DEFAULT_DATA_PORT = 'COM5'
 
 class Stream(QObject):
     '''For outputting terminal in GUI'''
@@ -40,8 +46,8 @@ class App(QDialog):
 
         # Set serial ports by default
         if platform.system() == 'Windows':
-            CLIportPath = 'COM4'
-            DATAportPath = 'COM5'
+            CLIportPath = DEFAULT_CLI_PORT
+            DATAportPath = DEFAULT_DATA_PORT
         elif platform.system() == 'Darwin':
             CLIportPath = '/dev/tty.usbmodemR10310411'
             DATAportPath = '/dev/tty.usbmodemR10310414'
@@ -56,8 +62,8 @@ class App(QDialog):
             portsSet = True
 
         # Set config file by default
-        if os.path.isfile('./1443config.cfg'):
-            self.configFileName = '1443config.cfg'
+        if os.path.isfile('./' + DEFAULT_CONFIG_FILE):
+            self.configFileName = DEFAULT_CONFIG_FILE
             self.configFileLabel.setText(self.configFileName)
             print("'{}' selected as config file".format(self.configFileName))
 
@@ -213,10 +219,15 @@ class App(QDialog):
         print('{} is selected as the DATA Port'.format(self.DATAportPath))
 
     def getConfigFile(self):
-        self.configFileName, _ = QFileDialog.getOpenFileName(self, 'Open Config File', './1443config.cfg', 'Config Files (*.cfg)')
+        self.configFileName, _ = QFileDialog.getOpenFileName(self, 'Open Config File', './' + DEFAULT_CONFIG_FILE, 'Config Files (*.cfg)')
         if self.configFileName == '':
-            self.configFileLabel.setText('No Config File Selected')
-            print('Please select a config file')
+            if os.path.isfile('./' + DEFAULT_CONFIG_FILE):
+                self.configFileName = DEFAULT_CONFIG_FILE
+                self.configFileLabel.setText(self.configFileName)
+                print("'{}' selected as config file by default".format(self.configFileName))
+            else:
+                self.configFileLabel.setText('No Config File Selected')
+                print('Please select a config file')
         else:
             self.configFileLabel.setText(self.configFileName)
             print("'{}' selected as config file".format(self.configFileName))
@@ -258,12 +269,20 @@ class App(QDialog):
 
     def startStopSensor(self):
         if self.sensorIsRunning:
+            # Stop sensor
             self.reader.CLIport.write(('sensorStop\n').encode())
+
+            if self.rec_button.isChecked():
+                self.reader.logFile(filename=self.filenameTextBox.text())
+                print("Data successfully saved to '{}.pkl'".format(self.filenameTextBox.text()))
+
             print('sensorStop')
             self.startStopButton.setText('Start Sensor')
             self.rec_button.setEnabled(True)
 
         else:
+            # Start sensor
+            self.reader.frameData = {}
             self.reader.CLIport.write(('sensorStart\n').encode())
             print('sensorStart')
             self.startStopButton.setText('Stop Sensor')
@@ -280,7 +299,6 @@ class App(QDialog):
         self.rec_button.setCheckable(True)
         self.rec_button.clicked[bool].connect(self.recordData)
         
-        # self.filename_label = QLabel(self, text='Filename will be shown here upon recording', alignment=Qt.AlignLeft)
         self.filenameTextBox = QLineEdit()
         
         recordHbox.addWidget(self.rec_button)
@@ -288,17 +306,16 @@ class App(QDialog):
         recordHbox.addWidget(self.filenameTextBox)
         self.recordGroupBox.setLayout(recordHbox)
 
-
     def recordData(self, pressed):
         if pressed:
             if self.filenameTextBox.text() == '':
                 self.filenameTextBox.setText("raw_" + str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
-            print("Data is being recorded with the filename '{}'".format(self.filenameTextBox.text()))
+            print("Data is being recorded with the filename '{}.pkl'".format(self.filenameTextBox.text()))
             self.filenameTextBox.setEnabled(False)
         else:
             self.filenameTextBox.setEnabled(True)
             self.filenameTextBox.clear()
-            print('Data is not being recorded')
+            print('Data is not being recorded; Filename is cleared')
 
     def center(self):
         """centers the window on the screen"""
