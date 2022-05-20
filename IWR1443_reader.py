@@ -218,13 +218,15 @@ class IWR1443_Reader:
                     
                     # Store the data in the detObj dictionary
                     self.detObj = {"numObj": tlv_numObj, "rangeIdx": rangeIdx, "range": rangeVal, "dopplerIdx": dopplerIdx, \
-                            "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z, "ts": str(time.time()-self.start_time)}
+                            "doppler": dopplerVal, "peakVal": peakVal, "x": x, "y": y, "z": z, "ts": str(time.time()-self.start_time), "ts_epoch": time.time()}
 
                     # Append detObj to frameData
-                    self.frameData[self.detObj["ts"]] = np.dstack([self.detObj["x"], self.detObj["y"], self.detObj["z"]])[0]
+                    # self.frameData[self.detObj["ts"]] = np.dstack([self.detObj["x"], self.detObj["y"], self.detObj["z"]])[0]
+                    self.frameData[self.detObj["ts_epoch"]] = np.dstack([self.detObj["x"], self.detObj["y"], self.detObj["z"], self.detObj["peakVal"]])[0]
                     # print(self.frameData[self.detObj["ts"]])
-                    print(self.detObj["x"])
-                    # print('hello')
+                    # print(self.detObj["x"])
+                    print(self.detObj["numObj"])
+                    # print(timeCpuCycles)
 
                     self.dataOK = 1
             

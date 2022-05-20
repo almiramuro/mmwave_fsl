@@ -20,8 +20,15 @@ import IWR1443_reader
 
 # change these values depending on your machine for convenience
 DEFAULT_CONFIG_FILE = '1443config.cfg'
-DEFAULT_CLI_PORT = 'COM4'
-DEFAULT_DATA_PORT = 'COM5'
+# DEFAULT_CONFIG_FILE = '1443_3d.cfg'
+
+# Windows
+# DEFAULT_CLI_PORT = 'COM4'
+# DEFAULT_DATA_PORT = 'COM5'
+
+# Mac
+DEFAULT_CLI_PORT = '/dev/cu.usbmodemR10310411'
+DEFAULT_DATA_PORT = '/dev/cu.usbmodemR10310414'
 
 class Stream(QObject):
     '''For outputting terminal in GUI'''
@@ -54,8 +61,8 @@ class App(QDialog):
             CLIportPath = DEFAULT_CLI_PORT
             DATAportPath = DEFAULT_DATA_PORT
         elif platform.system() == 'Darwin':
-            CLIportPath = '/dev/tty.usbmodemR10310411'
-            DATAportPath = '/dev/tty.usbmodemR10310414'
+            CLIportPath = '/dev/cu.usbmodemR10310411'
+            DATAportPath = '/dev/cu.usbmodemR10310414'
 
         if CLIportPath in self.ports:
             CLI_index = self.ports.index(CLIportPath)
@@ -371,15 +378,15 @@ class App(QDialog):
 
         self.ax = self.figure.add_subplot(111, projection='3d')
 
-        self.ax.set_xlim3d(-2, 2)
-        self.ax.set_ylim3d(-2, 2)
-        self.ax.set_zlim3d(-2, 2)
+        self.ax.set_xlim3d(-3, 3)
+        self.ax.set_ylim3d(-3, 3)
+        self.ax.set_zlim3d(-3, 3)
 
-        self.ax.set_xlabel('X [m]')
-        self.ax.set_ylabel('Y [m]')
-        self.ax.set_zlabel('Z [m]')
+        self.ax.set_xlabel('x [m]')
+        self.ax.set_ylabel('y [m]')
+        self.ax.set_zlabel('z [m]')
 
-        self.graph = self.ax.scatter([], [], [])
+        self.graph = self.ax.scatter([], [], [], s=5)
         
         self.ani = FuncAnimation(self.figure, self.updatePlot, self.timestamps, interval=33, blit=False, repeat=False)
 
