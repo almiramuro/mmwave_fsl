@@ -10,7 +10,7 @@ from lib.plot import *
     to add: normalize() after outlier removal
 """
 
-def cluster(extractedPts, e = 0.1, min_samp = 3, outlier = False):
+def cluster(extractedPts, e = 0.5, min_samp = 10, outlier = False):
     """
         input:              extractedPts    #ndarray (n x 3)
         output:             xyzc            #dictionary with key = color; value = coordinates
@@ -130,7 +130,7 @@ def decay(raw, k,f):
 
 if __name__=="__main__":
 
-    with open('happy1.pkl',"rb") as pm_data:
+    with open('hello3.pkl',"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
         
     # print(len(pm_contents))
@@ -159,5 +159,5 @@ if __name__=="__main__":
     # cluster
     for _, xyz in aggframes.items():
         print('_:',_,'xyz:',len(xyz))
-        clust = cluster(xyz, e = 0.125)
+        clust = cluster(xyz, e = 0.125, min_samp = 3)
         plot3d_col(clust.items())
