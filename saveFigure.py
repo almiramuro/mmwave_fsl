@@ -8,13 +8,15 @@ import os
 import pandas as pd
 
 def saveFig(x, axis = None, pltTitle = 'temp', saveDir = '.', reSize = True, saveNumpy = False):
-    
+       
     dir = pltTitle.split('_')
-    while len(dir) > 4:
+    while len(dir) > 5:
         dir[1] = '_'.join(dir[1:3:])
         del dir[2]
     
-    dir = '/'.join(dir)
+    pltTitle = dir[-1]
+    
+    dir = '/'.join(dir[:-1:])
     saveDir = os.path.join(saveDir, dir)
     if not os.path.isdir(saveDir):
         os.makedirs(saveDir)
@@ -24,18 +26,18 @@ def saveFig(x, axis = None, pltTitle = 'temp', saveDir = '.', reSize = True, sav
     if axis=='xy' or axis == None:
         ax.set_xlabel('x')
         ax.set_ylabel('y')
-        ax.set_xlim(-1,1)
-        ax.set_ylim(-1,1)
+        ax.set_xlim(-0.5, 0.5)
+        ax.set_ylim(-0.5, 0.5)
     elif axis == 'yz':
         ax.set_xlabel('y')
         ax.set_ylabel('z')
-        ax.set_xlim(-1,1)
-        ax.set_ylim(-1,1)
+        ax.set_xlim(-0.5, 0.5)
+        ax.set_ylim(-0.5, 0.5)
     elif axis == 'xz':
         ax.set_xlabel('x')
         ax.set_ylabel('z')
-        ax.set_xlim(-1,1)
-        ax.set_ylim(-1,1)
+        ax.set_xlim(-0.5, 0.5)
+        ax.set_ylim(-0.5, 0.5)
     if x is None:
         plt.clf()
     else:
@@ -56,44 +58,60 @@ def saveFig(x, axis = None, pltTitle = 'temp', saveDir = '.', reSize = True, sav
             ram.close()
             plt.close()
             return np.asarray(im)
+        # print(saveDir)
+        # exit()
         im.save(saveDir+'/'+pltTitle+'.png')
         ram.close()
+        plt.close()
     else:
         plt.savefig(saveDir+'/'+pltTitle+'.jpeg')
+        plt.close()
 
 def toFloat(pair = [None, None]):
     out = []
     if len(pair) > 2:
         count = len(pair) - 2
         while count:
-            pair.remove('')
+            if '\r' in pair:
+                pair.remove('\r')    
+            else:
+                pair.remove('')
             count -= 1
     for i in [0,1]:
-        a = pair[i].split('e')
-        if a[-1][0] == '+':
-           out.append(float(a[0])*(10^(int(a[-1][1::]))))
-        elif a[-1][0] == '-':
-           out.append(float(a[0])/(10**(int(a[-1][1::]))))
+        if 'e' in pair[i]:
+            a = pair[i].split('e')
+            if a[-1][0] == '+':
+                out.append(float(a[0])*(10^(int(a[-1][1::]))))
+            elif a[-1][0] == '-':
+                out.append(float(a[0])/(10**(int(a[-1][1::]))))
+        else:
+            out.append(float(pair[i]))        
     out = np.array(out, dtype=float)
     return out
             
 def npArray(data, view = None):
     out = []
     for i in range (0, data.size):
+        frame = []
         for j in range (0, len(data[i].split(' \n '))):
             array = np.array(data[i].split(' \n ')[j].split('\n '))
             array2d = []
             for k in range (0, array.size):
                 array[k] = array[k].replace('[', '')
                 array[k] = array[k].replace(']', '')
-                array2d.append(toFloat(array[k].split(' ')))                
-            out.append(np.array(array2d))
-    out = np.array(out, dtype=np.ndarray)
+                # print(array[k].split(' '))
+                array2d.append(toFloat(array[k].split(' ')))
+            # exit()                    
+            frame.append(np.array(array2d))
+        out.append(np.array(frame, dtype=np.ndarray))
+    # print(out[0].size)
+    # out = np.array(out, dtype=np.ndarray)
+    # print(out)
     return out
 
 def main():
-    filePath = 'preprocessed'
-    saveDir = 'images'
+    filePath = 'data/preprocessed_data'
+    saveDir = 'data/images'
     if not os.path.isdir(saveDir):
         os.makedirs(saveDir)
     signers = ['aaron', 'mira', 'luis']
@@ -103,18 +121,20 @@ def main():
         for sign in signs:
             sample = 15
             while sample:
-                dataset.append('{}_{}_{}_preprocessed.csv'.format(signer, sign, sample))
+                dataset.append('{}_{}_{}_processed.csv'.format(signer, sign, sample))
                 sample -= 1
     for data in dataset:
         file = filePath + '/' + data
         d = pd.read_csv(file)
         views = {'xy': [], 'yz': [], 'xz': []}
-        views['xy'] = npArray(d.xy.values, 'xy')
-        views['yz'] = npArray(d.yz.values, 'yz')
-        views['xz'] = npArray(d.xz.values, 'xz')
+        views['xy'] = (npArray(d.xy.values, 'xy'))
+        views['yz'] = (npArray(d.yz.values, 'yz'))
+        views['xz'] = (npArray(d.xz.values, 'xz'))
         for view in views:
             for frame in range (0, len(views[view])):
-                saveFig(views[view][frame], axis=view, pltTitle = file[:-13:]+view, saveDir = 'images', reSize = True, saveNumpy = False)
+                # print(len(views[view][frame][0]))
+                saveFig(views[view][frame][0], axis=view, pltTitle = data[:-13:]+view+'_'+str(frame), saveDir = saveDir, reSize = False, saveNumpy = False)
+        exit()
     # file = 'aaron_hello_world_2_processed.csv'
     # d = pd.read_csv(file)
     # views = {'xy': [], 'yz': [], 'xz': []}
