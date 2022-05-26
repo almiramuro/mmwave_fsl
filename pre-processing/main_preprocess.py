@@ -80,9 +80,6 @@ def normalize(xyz):
         
     """
     
-    # -------- Rotate --------
-
-
     # -------- Translate --------
     # Get centroid
     xyzsum = tuple(np.sum(xyz[:,i]) for i in range(3))
@@ -106,32 +103,23 @@ def decay(raw, k,f):
         output:
             agg = dictionary with frame number (int) as key and xyz points (2d (n x 3) np array) as value 
     """    
-    fcount = 1          # start frame count
-    agg = dict()        # aggregated point clouds into f frames
-
-    while(len(agg) != f):
-        toDel = []      # keys already passed to agg thus no longer needed in raw
-        ptcount = int(k/f)
-        print('raw:',len(raw.items()))
-        for key, pts in raw.items():
-            if(len(pts) <= ptcount):
-                if(fcount not in agg): 
-                    agg[fcount] = pts
-                else: 
-                    agg[fcount] = np.append(agg[fcount],pts,axis=0)
-                ptcount -= len(pts)
-                toDel.append(key)   # store used key to toDel array
-        fcount += 1
-        
-        # delete already processed keys
-        for i in toDel:
-            raw.pop(i)
+    fcount = [i for i in range(1, f + 1)]
+    pts_perframe = int(k/f)
+    agg = {frame: np.zeros((1,3)) for frame in fcount}
     
-    # show all generated aggregated frames
-    # for frame, pt in agg.items():
-    #     print('frame:', frame, 'pts:' , len(pt) , '\n',pt)
-    #     plot3d(pt)      
-    return agg
+    start = 0
+    frame = 1
+    agg[frame] = np.delete(agg[frame], 0, axis = 0)
+    
+    for key, pts in raw.items():    
+        for pt in pts:
+            agg[frame] = np.vstack((agg[frame], pt))
+            if(len(agg[frame]) == pts_perframe and frame < f): 
+                frame += 1
+                agg[frame] = np.delete(agg[frame], 0, axis = 0)
+            elif(len(agg[frame]) == pts_perframe and frame == f):
+                return agg
+
 
 def createMultiview(_3dframe):
     """
@@ -156,20 +144,21 @@ def createMultiview(_3dframe):
     # print(yzframes)
     return xyframes,yzframes,xzframes
 
-def preprocess(filename, ext, gloss, f):
+def preprocess(filename, f):
     
     # Input handling
     """
-        filename = string: <name>_<gloss>_<num>
-        ext = file extension
-        gloss = string: all caps, no spaces only underscores
+        filename = string: <name>_<gloss>_<num>.pkl
         f = number of desired aggregated frames
     """
 
-    with open(filename+ext,"rb") as pm_data:
+    #get gloss
+    gloss = filename.split('_')[1].upper()
+
+    with open(filename,"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
 
-    print('ORIG # OF frames:',len(pm_contents.items()))
+    # print('ORIG # OF frames:',len(pm_contents.items()))
     
     # Outlier Removal and Translation
     c = 0
@@ -180,15 +169,18 @@ def preprocess(filename, ext, gloss, f):
     
     
     # Aggregate Frames
-    
-    aggframes = decay(pm_contents, c,f)
+    # print(c, f)
+    # print(int(c/f))
+
+    aggframes = decay(pm_contents, c, f)
+
     
     
     # Cluster
 
     clustFrames = []                        # array to contain dictionaries
     for _, xyz in aggframes.items():        # iterated len(aggframes) times which is num of frames
-        print('_:',_,'xyz:',len(xyz))
+        # print('_:',_,'xyz:',len(xyz))
         clust = cluster(xyz, e = 0.125, min_samp = 3, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
         clustFrames.append(clust)
         # plot3d_col(clust.items())      # 1 frame 
@@ -203,7 +195,7 @@ def preprocess(filename, ext, gloss, f):
     data = {'xy': [], 'yz': [], 'xz': []} 
     for _3dframe in clustFrames:
         xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
-        print(len(xyf.values()))
+        if(len(xyf.values()) == 0): continue
         data['xy'].append(np.concatenate(list(xyf.values())))
         data['yz'].append(np.concatenate(list(yzf.values())))
         data['xz'].append(np.concatenate(list(xzf.values())))
@@ -215,7 +207,7 @@ def preprocess(filename, ext, gloss, f):
     currDir = os.getcwd()
     subfolder = 'preprocessed_data'
     os.makedirs(os.path.join(currDir, subfolder), exist_ok=True)  
-    newFile = filename +'_processed.csv'
+    newFile = filename[:-4] +'_processed.csv'
     df.to_csv(os.path.join(currDir, subfolder,newFile))  
 
     # trydf = pd.read_csv(os.path.join(currDir, subfolder,newFile))
@@ -223,6 +215,23 @@ def preprocess(filename, ext, gloss, f):
     # print(len(trydf.xy[0]))
 
 if __name__=="__main__":
-
-    preprocess('hello3','.pkl','hello',40)
     
+    
+    file_path = os.path.realpath(__file__)
+    currDir = os.path.dirname(file_path)
+    print(currDir)    
+    
+    os.chdir('..')
+    rootDir = os.getcwd()
+
+    if(currDir != rootDir):
+        os.chdir(rootDir)
+    
+
+    dataDir = 'data'
+    os.chdir(dataDir)
+
+    raw_data = os.listdir()
+
+    for file in raw_data:
+        preprocess(file,40)
