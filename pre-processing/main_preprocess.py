@@ -2,6 +2,8 @@
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 import pickle
+import pandas as pd
+import os
 
 from lib.plot import *
 """
@@ -78,9 +80,6 @@ def normalize(xyz):
         
     """
     
-    # -------- Rotate --------
-
-
     # -------- Translate --------
     # Get centroid
     xyzsum = tuple(np.sum(xyz[:,i]) for i in range(3))
@@ -97,67 +96,142 @@ def normalize(xyz):
 
 def decay(raw, k,f):
     """
-        raw = dictionary
-        k = int total # of points in a gesture
-        f = int # of desired frames
+        input:
+            raw = dictionary
+            k = int total # of points in a gesture
+            f = int # of desired frames
+        output:
+            agg = dictionary with frame number (int) as key and xyz points (2d (n x 3) np array) as value 
     """    
-    fcount = 1          # start frame count
-    agg = dict()        # aggregated point clouds into f frames
-
-    while(len(agg) != f):
-        toDel = []      # keys already passed to agg thus no longer needed in raw
-        ptcount = int(k/f)
-        print('raw:',len(raw.items()))
-        for key, pts in raw.items():
-            if(len(pts) <= ptcount):
-                if(fcount not in agg): 
-                    agg[fcount] = pts
-                else: 
-                    agg[fcount] = np.append(agg[fcount],pts,axis=0)
-                ptcount -= len(pts)
-                toDel.append(key)   # store used key to toDel array
-        fcount += 1
-        
-        # delete already processed keys
-        for i in toDel:
-            raw.pop(i)
+    fcount = [i for i in range(1, f + 1)]
+    pts_perframe = int(k/f)
+    agg = {frame: np.zeros((1,3)) for frame in fcount}
     
-    # show all generated aggregated frames
-    # for frame, pt in agg.items():
-    #     print('frame:', frame, 'pts:' , len(pt) , '\n',pt)
-    #     plot3d(pt)      
-    return agg
+    start = 0
+    frame = 1
+    agg[frame] = np.delete(agg[frame], 0, axis = 0)
+    
+    for key, pts in raw.items():    
+        for pt in pts:
+            agg[frame] = np.vstack((agg[frame], pt))
+            if(len(agg[frame]) == pts_perframe and frame < f): 
+                frame += 1
+                agg[frame] = np.delete(agg[frame], 0, axis = 0)
+            elif(len(agg[frame]) == pts_perframe and frame == f):
+                return agg
 
-if __name__=="__main__":
 
-    with open('hello3.pkl',"rb") as pm_data:
+def createMultiview(_3dframe):
+    """
+        input:
+            _3dframe: dictionary 
+                        >> key: cluster, value: 2d np array  (nx3)
+        output:
+            xyframes,yzframes,xzframes: 3 dictionaries 
+                        >> per dictionary: key is cluster, value 2d np array (nx2)
+    """
+    xyframes,yzframes,xzframes = dict(), dict(), dict()
+    for cluster, xyz in _3dframe.items():
+        xy, yz, xz = [], [], []
+        for X,Y,Z in xyz:
+            xy.append([X,Y])
+            yz.append([Y,Z])
+            xz.append([X,Z])
+        xyframes[cluster] = np.array(xy)
+        yzframes[cluster] = np.array(yz)
+        xzframes[cluster] = np.array(xz)
+
+    # print(yzframes)
+    return xyframes,yzframes,xzframes
+
+def preprocess(filename, f):
+    
+    # Input handling
+    """
+        filename = string: <name>_<gloss>_<num>.pkl
+        f = number of desired aggregated frames
+    """
+
+    #get gloss
+    gloss = filename.split('_')[1].upper()
+
+    with open(filename,"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
-        
-    # print(len(pm_contents))
-    # # nodupes = drop_duplicates(pm_contents)
-    # print(list(pm_contents.items())[0][1])
-    # for _, pts in pm_contents.items():
-    #     print(normalize(pts))
-    #     break
 
-    """divider only"""
-
-    print('ORIG # OF frames:',len(pm_contents.items()))
+    # print('ORIG # OF frames:',len(pm_contents.items()))
+    
+    # Outlier Removal and Translation
     c = 0
-
-    # outlier removal and translation
     for key, pts in pm_contents.items():
         c += len(pts)
         pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
         pm_contents[key] = normalize(pts)
     
-    print('total number of points all in all: ',c)
-
-    # aggregate frames
-    aggframes = decay(pm_contents, c,5)
     
-    # cluster
-    for _, xyz in aggframes.items():
-        print('_:',_,'xyz:',len(xyz))
-        clust = cluster(xyz, e = 0.125, min_samp = 3)
-        plot3d_col(clust.items())
+    # Aggregate Frames
+    # print(c, f)
+    # print(int(c/f))
+
+    aggframes = decay(pm_contents, c, f)
+
+    
+    
+    # Cluster
+
+    clustFrames = []                        # array to contain dictionaries
+    for _, xyz in aggframes.items():        # iterated len(aggframes) times which is num of frames
+        # print('_:',_,'xyz:',len(xyz))
+        clust = cluster(xyz, e = 0.125, min_samp = 3, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
+        clustFrames.append(clust)
+        # plot3d_col(clust.items())      # 1 frame 
+    
+    # Output handling 
+    """
+        CSV file 
+        1 row = 1 frame data
+        3 columns: xy, yz, xz
+        per cell: 2d array (n x 3) 
+    """
+    data = {'xy': [], 'yz': [], 'xz': []} 
+    for _3dframe in clustFrames:
+        xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
+        if(len(xyf.values()) == 0): continue
+        data['xy'].append(np.concatenate(list(xyf.values())))
+        data['yz'].append(np.concatenate(list(yzf.values())))
+        data['xz'].append(np.concatenate(list(xzf.values())))
+
+    print(len(data['xy'][0]),len(data['yz'][0]),len(data['xz'][0]))
+    """ Save data into df and then save to csv file """
+    df = pd.DataFrame(data)
+
+    currDir = os.getcwd()
+    subfolder = 'preprocessed_data'
+    os.makedirs(os.path.join(currDir, subfolder), exist_ok=True)  
+    newFile = filename[:-4] +'_processed.csv'
+    df.to_csv(os.path.join(currDir, subfolder,newFile))  
+
+    # trydf = pd.read_csv(os.path.join(currDir, subfolder,newFile))
+    # print(trydf.xy[0])
+    # print(len(trydf.xy[0]))
+
+if __name__=="__main__":
+    
+    
+    file_path = os.path.realpath(__file__)
+    currDir = os.path.dirname(file_path)
+    print(currDir)    
+    
+    os.chdir('..')
+    rootDir = os.getcwd()
+
+    if(currDir != rootDir):
+        os.chdir(rootDir)
+    
+
+    dataDir = 'data'
+    os.chdir(dataDir)
+
+    raw_data = os.listdir()
+
+    for file in raw_data:
+        preprocess(file,40)
