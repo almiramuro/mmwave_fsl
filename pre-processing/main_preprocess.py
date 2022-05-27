@@ -19,7 +19,12 @@ def cluster(extractedPts, e = 0.5, min_samp = 10, outlier = False):
         ---with colors --> for realtime
     """
 
-    db = DBSCAN(eps=e, min_samples=min_samp).fit(extractedPts)
+    
+    if(len(extractedPts[0]) == 4):
+        sw = extractedPts[:,3]
+    else:
+        sw = None
+    db = DBSCAN(eps=e, min_samples=min_samp).fit(extractedPts[:,:3],sample_weight=sw)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
 
@@ -77,7 +82,6 @@ def normalize(xyz):
         get centroid 
         get centroid angle wrt boresight angle
         reference distance = 1.5m
-        
     """
     
     # -------- Translate --------
@@ -95,6 +99,9 @@ def normalize(xyz):
     return trans
 
 def decay(raw, k,f):
+    global max_x, max_y, max_z 
+    global min_x, min_y, min_z 
+
     """
         input:
             raw = dictionary
@@ -111,8 +118,17 @@ def decay(raw, k,f):
     frame = 1
     agg[frame] = np.delete(agg[frame], 0, axis = 0)
     
-    for key, pts in raw.items():    
+    for key, pts in raw.items():  
         for pt in pts:
+
+            if(pt[0] < min_x): min_x = pt[0]
+            if(pt[1] < min_y): min_y = pt[1]
+            if(pt[2] < min_z): min_z = pt[2]
+
+            if(pt[0] > max_x): max_x = pt[0]
+            if(pt[1] > max_y): max_y = pt[1]
+            if(pt[2] > max_z): max_z = pt[2]
+
             agg[frame] = np.vstack((agg[frame], pt))
             if(len(agg[frame]) == pts_perframe and frame < f): 
                 frame += 1
@@ -144,7 +160,13 @@ def createMultiview(_3dframe):
     # print(yzframes)
     return xyframes,yzframes,xzframes
 
-def preprocess(filename, f):
+def preprocess(filename, f): 
+    """
+        To do: 
+            - make a bubble
+            - preprocessing try ung sinusuggest ni luis 
+            - create an infer.py for preprocessing
+    """
     
     # Input handling
     """
@@ -152,73 +174,76 @@ def preprocess(filename, f):
         f = number of desired aggregated frames
     """
 
-    #get gloss
-    gloss = filename.split('_')[1].upper()
+    global all_points
 
     with open(filename,"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
 
-    # print('ORIG # OF frames:',len(pm_contents.items()))
-    
     # Outlier Removal and Translation
     c = 0
     for key, pts in pm_contents.items():
         c += len(pts)
-        pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
+        pm_contents[key] = cluster(pts, e = 1, outlier=True)
         pm_contents[key] = normalize(pts)
     
+    for key, pts in pm_contents.items():
+        all_points = np.vstack((all_points, pts[:,:3]))
     
     # Aggregate Frames
-    # print(c, f)
-    # print(int(c/f))
-
     aggframes = decay(pm_contents, c, f)
 
-    
-    
     # Cluster
 
     clustFrames = []                        # array to contain dictionaries
     for _, xyz in aggframes.items():        # iterated len(aggframes) times which is num of frames
-        # print('_:',_,'xyz:',len(xyz))
-        clust = cluster(xyz, e = 0.125, min_samp = 3, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
+        clust = cluster(xyz, e = 0.125, min_samp = 10, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
         clustFrames.append(clust)
-        # plot3d_col(clust.items())      # 1 frame 
     
-    # Output handling 
-    """
-        CSV file 
-        1 row = 1 frame data
-        3 columns: xy, yz, xz
-        per cell: 2d array (n x 3) 
-    """
-    data = {'xy': [], 'yz': [], 'xz': []} 
-    for _3dframe in clustFrames:
-        xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
-        if(len(xyf.values()) == 0): continue
-        data['xy'].append(np.concatenate(list(xyf.values())))
-        data['yz'].append(np.concatenate(list(yzf.values())))
-        data['xz'].append(np.concatenate(list(xzf.values())))
+    # # Output handling 
+    # """
+    #     CSV file 
+    #     1 row = 1 frame data
+    #     3 columns: xy, yz, xz
+    #     per cell: 2d array (n x 3) 
+    # """
+    # data = {'xy': [], 'yz': [], 'xz': []} 
+    # for _3dframe in clustFrames:
+    #     xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
+    #     if(len(xyf.values()) == 0): continue
+    #     data['xy'].append(np.concatenate(list(xyf.values())))
+    #     data['yz'].append(np.concatenate(list(yzf.values())))
+    #     data['xz'].append(np.concatenate(list(xzf.values())))
 
-    print(len(data['xy'][0]),len(data['yz'][0]),len(data['xz'][0]))
-    """ Save data into df and then save to csv file """
-    df = pd.DataFrame(data)
+    # """ Save data into df and then save to csv file """
+    # df = pd.DataFrame(data)
 
-    currDir = os.getcwd()
-    subfolder = 'preprocessed_data'
-    os.makedirs(os.path.join(currDir, subfolder), exist_ok=True)  
-    newFile = filename[:-4] +'_processed.csv'
-    df.to_csv(os.path.join(currDir, subfolder,newFile))  
-
-    # trydf = pd.read_csv(os.path.join(currDir, subfolder,newFile))
-    # print(trydf.xy[0])
-    # print(len(trydf.xy[0]))
+    # currDir = os.getcwd()
+    # subfolder = 'preprocessed_data'
+    # os.makedirs(os.path.join(currDir, subfolder), exist_ok=True)  
+    # newFile = filename[:-4] +'_processed.csv'
+    # df.to_csv(os.path.join(currDir, subfolder,newFile))  
 
 if __name__=="__main__":
-        
+    max_x, max_y, max_z = 0,0,0
+    min_x, min_y, min_z = float('inf'),float('inf'),float('inf')
+    
+    all_points = np.zeros((0,3)) 
+
+    # with open("aaron_batangas_1.pkl","rb") as pm_data:
+    #     pm_contents = pickle.load(pm_data,encoding ="bytes")
+    
+    # # Outlier Removal and Translation
+    # c = 0
+    # for key, pts in pm_contents.items():
+    #     print(pts[:,:3])
+    #     break
+    #     c += len(pts)
+    #     pm_contents[key] = cluster(pts, e = 0.5, outlier=True)
+    #     pm_contents[key] = normalize(pts)
+
     file_path = os.path.realpath(__file__)
     currDir = os.path.dirname(file_path)
-    print(currDir)    
+    # print(currDir)    
     
     os.chdir('..')
     rootDir = os.getcwd()
@@ -231,6 +256,32 @@ if __name__=="__main__":
     os.chdir(dataDir)
 
     raw_data = os.listdir()
-
+    count = 0
     for file in raw_data:
+        if(file[-4:] != '.pkl'): continue
+        count+=1
         preprocess(file,40)
+        print('preprocessed {}'.format(count))
+
+    pointsdf = pd.DataFrame(all_points)
+    pointsdf.to_csv('all_points.csv')
+    
+    ave_x = np.average(all_points[:,0])
+    ave_y = np.average(all_points[:,1])
+    ave_z = np.average(all_points[:,2])
+
+    print('x: min {:0.5f} max {:0.5f} ave {:0.5f}'.format(np.min(all_points[:,0]),np.max(all_points[:,0]),ave_x))
+    print('y: min {:0.5f} max {:0.5f} ave {:0.5f}'.format(np.min(all_points[:,1]),np.max(all_points[:,1]),ave_y))
+    print('z: min {:0.5f} max {:0.5f} ave {:0.5f}'.format(np.min(all_points[:,2]),np.max(all_points[:,2]),ave_z))
+    print('count:')
+    print('total num of points:', len(all_points))
+    print('x > 2: ', np.count_nonzero(all_points[:,0] > 2))
+    print('y > 2: ', np.count_nonzero(all_points[:,1] > 2))
+    print('z > 2: ', np.count_nonzero(all_points[:,2] > 2))
+    print('x > 1: ', np.count_nonzero(all_points[:,0] > 1))
+    print('y > 1: ', np.count_nonzero(all_points[:,1] > 1))
+    print('z > 1: ', np.count_nonzero(all_points[:,2] > 1))
+
+    # with open("aaron_batangas_1.pkl","rb") as f:
+    #     pm_contents = pickle.load(f)
+    
