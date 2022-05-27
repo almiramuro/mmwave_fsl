@@ -6,5 +6,6 @@ if __name__ == "__main__":
     
     print(df.describe())
     print()
-    print(df.quantile(0.90))
-    print(df.quantile(0.10))
+    print(df.quantile(0.95))
+    print(df.quantile(0.05))
+    print('mean\n',df.mean())
