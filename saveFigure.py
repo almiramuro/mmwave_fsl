@@ -27,7 +27,7 @@ def saveFig(x, axis = None, pltTitle = 'temp', saveDir = '.', reSize = True, sav
     if axis=='xy' or axis == None:
         ax.set_xlabel('x')
         ax.set_ylabel('y')
-        ax.set_xlim(-0.477930, -0.7516806)
+        ax.set_xlim(-0.477930, 0.7516806)
         ax.set_ylim(-1.145667, 0.5425223)
     elif axis == 'yz':
         ax.set_xlabel('y')
@@ -37,7 +37,7 @@ def saveFig(x, axis = None, pltTitle = 'temp', saveDir = '.', reSize = True, sav
     elif axis == 'xz':
         ax.set_xlabel('x')
         ax.set_ylabel('z')
-        ax.set_xlim(-0.477930, -0.7516806)
+        ax.set_xlim(-0.477930, 0.7516806)
         ax.set_ylim(-1.354615, 0.9666574)
     if x is None:
         plt.clf()
