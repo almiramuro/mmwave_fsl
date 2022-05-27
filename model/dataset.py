@@ -10,69 +10,31 @@ from string import digits
 import logging 
 from sklearn.metrics import accuracy_score,confusion_matrix
 
-
-
-class SignsDataset(torch.utils.data.Dataset):
-    def __init__(self, root, classes, csv_file):
-        self.root = root 
-
-        # Initialize data
-        self.df = pd.read_csv(csv_file)
-        
-        df_values = self.df.values
-
-        # df: ['time_series file', 'class_id']
-        self.signs = np.unique(np.unique(self.df.iloc[:, 0].values))
-        self.sign_gloss_dict = {}
-
-        # for every time_series_file load into an array
-        for data in df_values:
-            fname = data[0]
-            sign =  np.array([1,2,3,4,5])       # change to time_series_file loaded into an array
-            
-            gloss =  data[1]                    # label
-            
-            self.sign_gloss_dict[fname] = {
-                'sign': sign,
-                'gloss': gloss
-            }
-
-
-        
-    def __len__(self):
-        # return the size of the dataset
-        return len(self.df)
-
-    def __getitem__(self, idx):
-        # fetching a data sample for a given key
-        return self.sign_gloss_dict[idx]
-
 class multiViewDataset(Dataset):
+	def __init__(self, dirPath, classes, filePath, train=True, frameCount=40):
+		self.dirPath = dirPath
+		self.classes = classes
+		self.fileList = []
+		self.trainOnly = train
+		self.data = None
+		self.labels = []
+		self.frameCount = frameCount
+		self.views = ['xy','yz','xz']
 
-	def __init__(self,dirPath,classes,filePath,train=True,frameCount=40,logger=None):
-		self.dirPath=dirPath
-		self.classes=classes
-		self.fileList=[]
-		self.trainOnly=train
-		self.data=None
-		self.labels=[]
-		self.frameCount=frameCount
-		self.views=['xy','yz','xz']
-		self.bodyParts=['body','left','right']
-		self.logger=logger
-		f=open(filePath,'r')
-		f=f.readlines()
+		f = open(filePath,'r')
+		f = f.readlines()
 		if train:
 			f=[f.strip().split(',')[1] for f in f if 'Train' in f]
 		else:
 			f=[f.strip().split(',')[1] for f in f if 'Test' in f]
-		f=[getUser(f)+'_'+getLabel(f) for f in f]
-		self.fileList=f
-		self.fileListLow=[f.lower() for f in f]
 		
-		inDirs=glob.glob(dirPath+'/*')
-		inDirs=[inDir for inDir in inDirs if inDir.split('/')[-1] in self.fileList or inDir.split('/')[-1] in self.fileListLow]
-		self.data,self.labels=self.loadData(inDirs)
+		f = [getUser(f) + '_' + getLabel(f) for f in f]
+		self.fileList = f
+		self.fileListLow = [f.lower() for f in f]
+		
+		inDirs = glob.glob(dirPath+'/*')
+		inDirs = [inDir for inDir in inDirs if inDir.split('/')[-1] in self.fileList or inDir.split('/')[-1] in self.fileListLow]
+		self.data, self.labels = self.loadData(inDirs)
 
 	def __len__(self):
 		return len(self.labels)
@@ -109,3 +71,45 @@ class multiViewDataset(Dataset):
 		# data -> dictionary 
 		# labels -> array
 		return data,labels
+
+def getUser(file):
+	user = file.strip().split('/')[-1].split('_')[0]
+	return user
+
+def getLabel(file, classes=None):
+	pass
+
+# class SignsDataset(torch.utils.data.Dataset):
+#     def __init__(self, root, classes, csv_file):
+#         self.root = root 
+
+#         # Initialize data
+#         self.df = pd.read_csv(csv_file)
+        
+#         df_values = self.df.values
+
+#         # df: ['time_series file', 'class_id']
+#         self.signs = np.unique(np.unique(self.df.iloc[:, 0].values))
+#         self.sign_gloss_dict = {}
+
+#         # for every time_series_file load into an array
+#         for data in df_values:
+#             fname = data[0]
+#             sign =  np.array([1,2,3,4,5])       # change to time_series_file loaded into an array
+            
+#             gloss =  data[1]                    # label
+            
+#             self.sign_gloss_dict[fname] = {
+#                 'sign': sign,
+#                 'gloss': gloss
+#             }
+
+
+        
+#     def __len__(self):
+#         # return the size of the dataset
+#         return len(self.df)
+
+#     def __getitem__(self, idx):
+#         # fetching a data sample for a given key
+#         return self.sign_gloss_dict[idx]
