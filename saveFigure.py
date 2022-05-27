@@ -21,23 +21,24 @@ def saveFig(x, axis = None, pltTitle = 'temp', saveDir = '.', reSize = True, sav
     if not os.path.isdir(saveDir):
         os.makedirs(saveDir)
     
+    #Change axis limits
     fig=plt.figure()
     ax=fig.add_subplot(111)
     if axis=='xy' or axis == None:
         ax.set_xlabel('x')
         ax.set_ylabel('y')
-        ax.set_xlim(-0.5, 0.5)
-        ax.set_ylim(-0.5, 0.5)
+        ax.set_xlim(-0.477930, -0.003037)
+        ax.set_ylim(-1.145667, 0.036919)
     elif axis == 'yz':
         ax.set_xlabel('y')
         ax.set_ylabel('z')
-        ax.set_xlim(-0.5, 0.5)
-        ax.set_ylim(-0.5, 0.5)
+        ax.set_xlim(-1.145667, 0.036919)
+        ax.set_ylim(-1.354615, 0.002628)
     elif axis == 'xz':
         ax.set_xlabel('x')
         ax.set_ylabel('z')
-        ax.set_xlim(-0.5, 0.5)
-        ax.set_ylim(-0.5, 0.5)
+        ax.set_xlim(-0.477930, -0.003037)
+        ax.set_ylim(-1.354615, 0.002628)
     if x is None:
         plt.clf()
     else:
@@ -133,8 +134,8 @@ def main():
         for view in views:
             for frame in range (0, len(views[view])):
                 # print(len(views[view][frame][0]))
-                saveFig(views[view][frame][0], axis=view, pltTitle = data[:-13:]+view+'_'+str(frame), saveDir = saveDir, reSize = False, saveNumpy = False)
-        exit()
+                saveFig(views[view][frame][0], axis=view, pltTitle = data[:-13:]+view+'_'+str(frame), saveDir = saveDir, reSize = True, saveNumpy = False)
+        # exit()
     # file = 'aaron_hello_world_2_processed.csv'
     # d = pd.read_csv(file)
     # views = {'xy': [], 'yz': [], 'xz': []}
