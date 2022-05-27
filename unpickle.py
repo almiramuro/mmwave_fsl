@@ -5,9 +5,11 @@ from math import log10
 import matplotlib.animation
 
 
-filename = 'raw_2022-05-19_17-09-27'
+filename = 'aaron_batangas_1'
 with open(filename+'.pkl', 'rb') as handle:
     data = pickle.load(handle)
+
+print(data)
 
 t = list(data.keys())
 # print(data[t[0]][0][3])
