@@ -258,10 +258,11 @@ if __name__=="__main__":
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
         # count+=1
-        preprocess(file,20)
+        preprocess(file,10)
     #     print('preprocessed {}'.format(count))
-
+    d = {0:'x', 1:'y', 2:'z'}
     pointsdf = pd.DataFrame(all_points)
+    pointsdf.rename(columns = d, inplace=True)
     pointsdf.to_csv('all_points.csv')
     
     # ave_x = np.average(all_points[:,0])
