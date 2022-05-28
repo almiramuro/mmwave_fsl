@@ -10,7 +10,7 @@ from model import Net
 
 dirPath = '../data/images'
 users = ['aaron', 'mira', 'luis']
-classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'Batangas', 'corruption', 'body', 'graduate']
+classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
 saveDir='./checkpoints/'
 
 def train():
