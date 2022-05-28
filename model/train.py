@@ -41,7 +41,7 @@ def train():
 	print('Model loaded')
 
 	# # Define optimizer
-	optimizer = optim.Adam(model.parameters(), lr=0.0000005)
+	optimizer = optim.Adam(model.parameters(), lr=0.00000025)
 	criterion = nn.CrossEntropyLoss()
 
 	# Train loop
