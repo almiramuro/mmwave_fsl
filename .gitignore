@@ -7,3 +7,4 @@ share
 etc
 .ipynb_checkpoints
 .DS_Store
+data/images
