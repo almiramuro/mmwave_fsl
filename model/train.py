@@ -36,7 +36,7 @@ def train():
 	model parameters
 	class_size, hidden_dim=2048, num_layers=2, dropout=0.65
 	'''
-	model = Net(class_size = len(classes), hidden_dim = 2048, num_layers = 4, dropout = 0.65, frameCount=20, device=device)
+	model = Net(class_size = len(classes), hidden_dim = 2048, num_layers = 2, dropout = 0.5, frameCount=20, device=device)
 	model.to(device)
 	print('Model loaded')
 
