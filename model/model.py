@@ -26,25 +26,29 @@ class Net(nn.Module):
 			self.conv[view] = nn.Sequential(
 				nn.Conv2d(1, 16, 5, padding=(2,2)), nn.ReLU(), nn.MaxPool2d((2,2), 2),
 				nn.Conv2d(16, 32, 5, padding=(2,2)), nn.ReLU(), nn.MaxPool2d((2,2), 2),
-				nn.Conv2d(32, 64, 5, padding=(2,2)), nn.ReLU(), nn.MaxPool2d((2,2), 2),
-				nn.Conv2d(64, 128, 5, padding=(2,2)), nn.ReLU(), nn.MaxPool2d((2,2), 2)
+				nn.Conv2d(32, 64, 5, padding=(2,2)), nn.ReLU(), nn.MaxPool2d((2,2), 2)
+				# nn.Conv2d(64, 128, 5, padding=(2,2)), nn.ReLU(), nn.MaxPool2d((2,2), 2)
 			)
 
 		self.lstm = nn.LSTM(
-			input_size=768, 
+			input_size=2880, 
 			hidden_size=self.hidden_dim, 
 			num_layers=self.num_layers, 
 			batch_first=True)
 			# bidirectional=False)
 		self.dense = nn.Sequential(
 			nn.Linear(self.hidden_dim, 1024),
-			nn.Linear(1024, 512),
 			nn.Dropout(p=dropout),
+			nn.Linear(1024, 512),
 			nn.Linear(512, class_size)
 		)
+	
+	def init_hidden(self, batch):
+		return (torch.zeros(1, batch, self.hidden_dim, device=self.device), torch.zeros(1, batch,self.hidden_dim, device=self.device))
 
 	def forward(self, x):
 		self.batch = x['xy'].shape[0]
+		# hidden = self.init_hidden(self.batch)
 		# print(x['xy'].shape[0])
 		data = None
 		# exit()
@@ -61,7 +65,7 @@ class Net(nn.Module):
 		# exit()
 		# print('Passed thru multiview cnn')
 		
-		o, _ = self.lstm(data)
+		o, hidden = self.lstm(data)
 		# print('Passed thru lstm')
 		final_layer = o[:,-1,:].reshape(self.batch, -1)
 		

@@ -22,9 +22,9 @@ def train():
 	multiViewDataset Parameters
 	dirPath, classes, filePath, train=True, frameCount=40
 	'''
-	trainDataset = multiViewDataset(dirPath, users, classes, train=True, frameCount=20, device=device)
+	trainDataset = multiViewDataset(dirPath, users, classes, train=True, frameCount=10, device=device)
 	print('Train dataset loaded')
-	testDataset = multiViewDataset(dirPath, users, classes, train=False, frameCount=20, device=device)
+	testDataset = multiViewDataset(dirPath, users, classes, train=False, frameCount=10, device=device)
 	print('Test dataset loaded')
 
 	# Define dataloaders
@@ -36,16 +36,16 @@ def train():
 	model parameters
 	class_size, hidden_dim=2048, num_layers=2, dropout=0.65
 	'''
-	model = Net(class_size = len(classes), hidden_dim = 2048, num_layers = 2, dropout = 0.2, frameCount=20, device=device)
+	model = Net(len(classes),2048, 2, 0.2, frameCount=10, device=device)
 	model.to(device)
 	print('Model loaded')
 
 	# # Define optimizer
-	optimizer = optim.Adam(model.parameters(), lr=0.000002)
-	criterion = nn.CrossEntropyLoss().to(device)
+	optimizer = optim.Adam(model.parameters(), lr=0.0000005)
+	criterion = nn.CrossEntropyLoss()
 
 	# Train loop
-	for epoch in range(100):
+	for epoch in range(400):
 		running_loss = 0
 		batchCount = 0
 		for xy, yz, xz, label in trainDataLoader:	
@@ -64,7 +64,7 @@ def train():
 				print("Loss for epoch:{} is: {}".format(epoch,(running_loss/batchCount)))
 				batchCount =0
 				running_loss = 0
-		if epoch % 10 == 0 and epoch > 0:
+		if epoch % 20 == 0 and epoch > 0:
 			torch.save(model.state_dict(), saveDir+'model-'+str(epoch)+'.pth')
 		
 		#eval

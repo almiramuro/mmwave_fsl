@@ -35,8 +35,13 @@ class multiViewDataset(Dataset):
 			for label in self.classes:
 				for i in self.sample_range:
 					for view in self.views:
-						frames = np.array([np.array(Image.open(self.dirPath+'/'+user+'/'+label+'/'+str(i)+'/'+view+'/'+str(frame)+'.png')) for frame in range(self.frameCount)])
+						# print(np.array(Image.open(self.dirPath+'/'+user+'/'+label+'/'+str(i)+'/'+view+'/'+str(1)+'.png')))
+						# exit()
+						frames = np.array([np.asarray(Image.open(self.dirPath+'/'+user+'/'+label+'/'+str(i)+'/'+view+'/'+str(frame)+'.png')) for frame in range(self.frameCount)])
 						self.data[view].append(frames)
+						print(frames[0].shape)
+					# print(torch.tensor(frames, dtype=torch.float32))
+					# exit()
 					self.labels.append(self.classes.index(label))
 
 	def __len__(self):
