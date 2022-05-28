@@ -36,12 +36,12 @@ def train():
 	model parameters
 	class_size, hidden_dim=2048, num_layers=2, dropout=0.65
 	'''
-	model = Net(class_size = len(classes), hidden_dim = 2048, num_layers = 2, dropout = 0.5, frameCount=20, device=device)
+	model = Net(class_size = len(classes), hidden_dim = 2048, num_layers = 2, dropout = 0.2, frameCount=20, device=device)
 	model.to(device)
 	print('Model loaded')
 
 	# # Define optimizer
-	optimizer = optim.Adam(model.parameters(), lr=0.000001)
+	optimizer = optim.Adam(model.parameters(), lr=0.000002)
 	criterion = nn.CrossEntropyLoss().to(device)
 
 	# Train loop
