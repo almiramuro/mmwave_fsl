@@ -22,9 +22,9 @@ def train():
 	multiViewDataset Parameters
 	dirPath, classes, filePath, train=True, frameCount=40
 	'''
-	trainDataset = multiViewDataset(dirPath, users, classes, train=True, frameCount=20)
+	trainDataset = multiViewDataset(dirPath, users, classes, train=True, frameCount=20, device=device)
 	print('Train dataset loaded')
-	testDataset = multiViewDataset(dirPath, users, classes, train=False, frameCount=20)
+	testDataset = multiViewDataset(dirPath, users, classes, train=False, frameCount=20, device=device)
 	print('Test dataset loaded')
 
 	# Define dataloaders
@@ -66,6 +66,8 @@ def train():
 				running_loss = 0
 		if epoch % 10 == 0 and epoch > 0:
 			torch.save(model.state_dict(), saveDir+'model-'+str(epoch)+'.pth')
+		
+		#eval
 
 if __name__=='__main__':
 	train()
