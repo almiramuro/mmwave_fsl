@@ -52,7 +52,7 @@ for epoch in range(400):
 		running_loss+=loss.item()
 		batchCount+=1
 		if batchCount==5:
-			print("Loss for epoch:%s is: %s",epoch,(running_loss/(batchCount*8)))
+			print("Loss for epoch:%s is: %s",epoch,(running_loss/(batchCount*5)))
 			batchCount=0
 			running_loss=0
 	if epoch%5==0 and epoch > 0:
