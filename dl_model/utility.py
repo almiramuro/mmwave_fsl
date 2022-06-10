@@ -215,10 +215,11 @@ class multiViewDatasetConcat(Dataset):
 		self.fileListLow=[f.lower() for f in f]		# lowercase everything
 
 		inDirs=glob.glob(dirPath+'/*')				# list containing the folder names in the format <user_gloss_it>
-
-		# get the files in the Directory that are in the fileList
-		inDirs=[inDir for inDir in inDirs if getLower(inDir.split('/')[-1]) in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow]
 		
+		# get the files in the Directory that are in the fileList
+		inDirs=[inDir.replace('\\','/') for inDir in inDirs]
+		inDirs=[inDir for inDir in inDirs if getLower(inDir.split('/')[-1]) in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow]
+		# print(inDirs)
 		self.data,self.labels,self.inFiles=self.loadData(inDirs)
 		
 		self.unique_labels=getDedup(copy.deepcopy(self.labels))			# creates a new object and recursively adds the copies of nested objects present in the original elements.
@@ -226,7 +227,7 @@ class multiViewDatasetConcat(Dataset):
 		print([classes[label]  for label in self.unique_labels])	
 		print(len(self.data),len(self.labels))
 		
-		shape=self.data[0].shape
+		shape = self.data[0].shape
 		
 		for i,x in enumerate(self.data):
 			if x.shape!=shape:
@@ -254,6 +255,7 @@ class multiViewDatasetConcat(Dataset):
 		files=[]
 		for inDir in inDirs:									# inDirs = preprocessed folder		| inDir = folder named user_gloss_it containing  3 npy files
 			npFiles=glob.glob(inDir+'/*')
+			# print(npFiles)
 			if len(npFiles) == 0:
 				continue
 			npFiles=sorted(npFiles)
