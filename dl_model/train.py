@@ -1,6 +1,6 @@
 ﻿from utility import createTrainTest,createLogger,multiViewDatasetConcat
 from torch.utils.data import DataLoader
-from model import wordNet
+from dl_model.model import wordNet
 import numpy as np 
 import torch.nn as nn
 import torch.optim as optim
@@ -18,7 +18,7 @@ os.makedirs(saveDir, exist_ok=True)
 
 # Copied from exasl	--editing now
 
-filePath='./train_test_all_glosses'
+filePath='train_test_all_glosses'
 
 dirPath = '../data/preprocessed_data'
 
