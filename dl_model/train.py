@@ -18,7 +18,7 @@ os.makedirs(saveDir, exist_ok=True)
 
 # Copied from exasl	--editing now
 
-filePath='./train_test_all_gloss'
+filePath='./train_test_all_glosses'
 
 dirPath = '../data/preprocessed_data'
 

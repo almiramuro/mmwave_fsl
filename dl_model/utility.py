@@ -172,7 +172,7 @@ def createTrainTest(userDirs,users,testCount,outFile,classes,targets=None,nonMan
 class multiViewDatasetConcat(Dataset):
 	"""
 	
-		filePath='./train_test_all_gloss'
+		filePath='./train_test_all_glosses'
 
 		dirPath = '../data/preprocessed_data'
 
@@ -215,7 +215,7 @@ class multiViewDatasetConcat(Dataset):
 		self.fileListLow=[f.lower() for f in f]		# lowercase everything
 
 		inDirs=glob.glob(dirPath+'/*')				# list containing the folder names in the format <user_gloss_it>
-		
+
 		# get the files in the Directory that are in the fileList
 		inDirs=[inDir for inDir in inDirs if getLower(inDir.split('/')[-1]) in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow]
 		
