@@ -24,9 +24,9 @@ dirPath = '../data/preprocessed_data'
 
 trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
 
-logger=createLogger('./scratch','unclustered-gloss-all')
+# logger=createLogger('./scratch','unclustered-gloss-all')
 
-logger.info("Training set total number of samples:%s",len(trainDataset))
+# logger.info("Training set total number of samples:%s",len(trainDataset))
 
 torch.manual_seed(1)
 torch.cuda.manual_seed(1)
@@ -52,7 +52,7 @@ for epoch in range(400):
 		running_loss+=loss.item()
 		batchCount+=1
 		if batchCount==5:
-			logger.info("Loss for epoch:%s is: %s",epoch,(running_loss/(batchCount*8)))
+			print("Loss for epoch:%s is: %s",epoch,(running_loss/(batchCount*8)))
 			batchCount=0
 			running_loss=0
 	if epoch%5==0 and epoch > 0:
