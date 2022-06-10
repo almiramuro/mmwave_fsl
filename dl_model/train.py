@@ -1,0 +1,123 @@
+﻿from utility import createTrainTest,createLogger,multiViewDatasetConcat
+from torch.utils.data import DataLoader
+from model import wordNet
+import numpy as np 
+import torch.nn as nn
+import torch.optim as optim
+import torch
+import numpy as np
+import torch.nn.functional as F
+import os
+
+dirPath = '../data'
+users = ['aaron', 'mira', 'luis']
+classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
+saveDir='./checkpoints/'
+os.makedirs(saveDir, exist_ok=True)
+
+
+# Copied from exasl	--editing now
+
+filePath='./train_test_all_gloss'
+
+dirPath = '../data/preprocessed_data'
+
+trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
+
+logger=createLogger('./scratch','unclustered-gloss-all')
+
+logger.info("Training set total number of samples:%s",len(trainDataset))
+
+torch.manual_seed(1)
+torch.cuda.manual_seed(1)
+np.random.seed(1)
+torch.backends.cudnn.deterministic = True
+
+
+net=wordNet(2048,len(classes),2,5,0.65,True,10,True)		# 40 changed to 10 ; 10 changed to 5
+
+optimizer=optim.Adam(net.parameters(),lr=0.000001)
+multiViewDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)
+criterion=nn.CrossEntropyLoss()
+net.train()
+for epoch in range(400):
+	running_loss=0
+	batchCount=0
+	for x,label in multiViewDataLoader:		
+		net.zero_grad()
+		y=net(x.cuda(),10)		# 40 changed to 10
+		loss=criterion(y,label.cuda())
+		loss.backward()
+		optimizer.step()
+		running_loss+=loss.item()
+		batchCount+=1
+		if batchCount==5:
+			logger.info("Loss for epoch:%s is: %s",epoch,(running_loss/(batchCount*8)))
+			batchCount=0
+			running_loss=0
+	if epoch%5==0 and epoch > 0:
+		torch.save(net.state_dict(),saveDir+'model-'+str(epoch)+'.pth')
+
+
+
+
+
+"""
+def train():
+	device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+	print('Device selected: ', device)
+
+	# Define datasets
+	'''
+	multiViewDataset Parameters
+	dirPath, classes, filePath, train=True, frameCount=40
+	'''
+	trainDataset = multiViewDataset(dirPath, users, classes, train=True, frameCount=10, device=device)
+	print('Train dataset loaded')
+	testDataset = multiViewDataset(dirPath, users, classes, train=False, frameCount=10, device=device)
+	print('Test dataset loaded')
+
+	# Define dataloaders
+	trainDataLoader = DataLoader(trainDataset, batch_size=20, shuffle=True)
+	# testDataLoader = DataLoader(testDataset, batch_size=1, shuffle=False)
+
+	# Define model
+	'''
+	model parameters
+	class_size, hidden_dim=2048, num_layers=2, dropout=0.65
+	'''
+	model = Net(len(classes),2048, 2, 0.2, frameCount=10, device=device)
+	model.to(device)
+	print('Model loaded')
+
+	# # Define optimizer
+	optimizer = optim.Adam(model.parameters(), lr=0.00000025)
+	criterion = nn.CrossEntropyLoss()
+
+	# Train loop
+	for epoch in range(400):
+		running_loss = 0
+		batchCount = 0
+		for xy, yz, xz, label in trainDataLoader:	
+			# print(xy.shape, label)
+			# exit()
+			y = model({'xy': xy, 'yz': yz, 'xz': xz})
+			# print(y.is_cuda)
+			# print(label.is_cuda)
+			# exit()
+			loss = criterion(y, label)
+			loss.backward()
+			optimizer.step()
+			running_loss += loss.item()
+			batchCount += 1
+			if batchCount == 1:
+				print("Loss for epoch:{} is: {}".format(epoch,(running_loss/batchCount)))
+				batchCount =0
+				running_loss = 0
+		if epoch % 20 == 0 and epoch > 0:
+			torch.save(model.state_dict(), saveDir+'model-'+str(epoch)+'.pth')
+		
+		#eval
+
+if __name__=='__main__':
+	train()"""

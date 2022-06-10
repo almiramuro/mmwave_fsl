@@ -4,7 +4,7 @@ from sklearn.cluster import DBSCAN
 import pickle
 import pandas as pd
 import os
-
+from saveFigure import saveFig
 from lib.plot import *
 """
     Outlier removal (cluster) -> Aggregate frames (delay) -> Cluster (cluster)
@@ -147,8 +147,27 @@ def createMultiview(_3dframe):
         yzframes[cluster] = np.array(yz)
         xzframes[cluster] = np.array(xz)
 
-    # print('frames xy:{} yz:{} xz:{}'.format(len(xyframes),len(yzframes),len(xzframes)))
     return xyframes,yzframes,xzframes
+
+def npySave(view, data, dataSaveDir, imgSaveDir):
+    """
+        view = str, any one of ['xy','yz','xz']
+        data = all aggregated frames
+        dataSaveDir = path (os.path.join(currDir, subfolder, filename[:-4]))
+                        (sample: ./data/preprocessed_data/aaron_batangas_1)
+        imgSaveDir = path for image
+    """
+    outData = []
+    count = 1
+
+    for frame in data:
+        saveFig(frame,axis=view,pltTitle='Frame-'+str(count), saveDir=imgSaveDir, reSize = True)
+        outData.append(saveFig(frame, axis=view, reSize = True, saveNumpy = True))
+        count += 1
+    
+    np.save(dataSaveDir+'/'+view+'.npy', np.array(outData))
+
+    return np.array(outData)
 
 def preprocess(filename, f): 
     """
@@ -163,8 +182,10 @@ def preprocess(filename, f):
         filename = string: <name>_<gloss>_<num>.pkl
         f = number of desired aggregated frames
     """
-
+    
     global all_points
+
+    gloss = filename.split('_')[1]
 
     with open(filename,"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
@@ -199,10 +220,11 @@ def preprocess(filename, f):
 
     # Output handling 
     """
-        CSV file 
-        1 row = 1 frame data
-        3 columns: xy, yz, xz
-        per cell: 2d array (n x 3) 
+        numpy file (.npy)
+        1 npy contains 1 array with size (# of frames, # of pts/frame, # of dimensions/pt)
+        # of frames = f
+        # of pts/frame = dapat constant
+        # of dimensions/pt = 2             (x,y)
     """
     data = {'xy': [], 'yz': [], 'xz': []} 
     for _3dframe in clustFrames:
@@ -212,15 +234,29 @@ def preprocess(filename, f):
         data['yz'].append(np.concatenate(list(yzf.values())))
         data['xz'].append(np.concatenate(list(xzf.values())))
 
-    """ Save data into df and then save to csv file """
-    df = pd.DataFrame(data)
 
-    currDir = os.getcwd()
-    subfolder = 'preprocessed_data'
-    os.makedirs(os.path.join(currDir, subfolder), exist_ok=True)  
-    newFile = filename[:-4] +'_processed.csv'
-    df.to_csv(os.path.join(currDir, subfolder,newFile))  
+    currDir = os.getcwd()                                                   #dirPath (data)
+    
+    datafolder = 'preprocessed_data'    
+    imgfolder = 'images'
 
+    dataSaveDir = os.path.join(currDir, datafolder, filename[:-4])            #(data/preprocessed_data/user_gloss_it)
+    imgSaveDir = os.path.join(currDir, imgfolder, filename[:-4])              #(data/images/user_gloss_it)
+
+    # for data
+    os.makedirs(os.path.join(currDir, datafolder), exist_ok=True)             #inDirs (data/preprocessed_data)
+    os.makedirs(dataSaveDir, exist_ok=True)                                   #inDir  (data/preprocessed_data/user_gloss_it)
+    
+    # for imgs
+    os.makedirs(os.path.join(currDir, imgfolder), exist_ok=True)            
+    os.makedirs(imgSaveDir, exist_ok=True)                                        
+
+    views = ['xy', 'yz', 'xz']
+    
+    for view in views:
+        npySave(view, data[view], dataSaveDir, imgSaveDir)
+    
+    
 if __name__=="__main__":
     max_x, max_y, max_z = 0,0,0
     min_x, min_y, min_z = float('inf'),float('inf'),float('inf')
