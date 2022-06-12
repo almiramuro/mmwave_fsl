@@ -34,7 +34,7 @@ np.random.seed(1)
 torch.backends.cudnn.deterministic = True
 
 
-net=wordNet(2048,len(classes),2,5,0.65,True,10,True)		# 40 changed to 10 ; 10 changed to 5
+net=wordNet(2048,len(classes),2,5,0.65,False,10,True)		# 40 changed to 10 ; 10 changed to 5
 
 optimizer=optim.Adam(net.parameters(),lr=0.000001)
 multiViewDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)

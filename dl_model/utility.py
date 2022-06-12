@@ -209,7 +209,7 @@ class multiViewDatasetConcat(Dataset):
 			f=[f.strip().split(',')[1].strip() for f in f if 'Train' in f]
 		else:
 			f=[f.strip().split(',')[1].strip() for f in f if 'Test' in f]
-
+		
 		
 		self.fileList=f								# filenames list
 		self.fileListLow=[f.lower() for f in f]		# lowercase everything
@@ -317,7 +317,7 @@ def createLogger(inDir,logFile):
 	return logging.getLogger()
 
 def computeAccuracy(labels,predictions,classes):
-	return confusion_matrix(labels,predictions,classes),accuracy_score(labels,predictions)
+	return confusion_matrix(labels,predictions,labels=classes),accuracy_score(labels,predictions)
 
 def compute_wer(ref,hyp):
 	command="wer "+ref+" "+hyp
