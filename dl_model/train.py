@@ -49,7 +49,7 @@ if __name__=="__main__":
 	torch.backends.cudnn.deterministic = True
 
 
-	net=wordNet(2048,len(classes),2,5,0.65,False,10,True)		# 40 changed to 10 ; 10 changed to 5
+	net=wordNet(2048,len(classes),2,5,0.65,use_cuda=True,frameCount=10,dataParallel=False)		# 40 changed to 10 ; 10 changed to 5
 
 	optimizer=optim.Adam(net.parameters(),lr=0.000001)
 	multiViewDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)
@@ -71,5 +71,7 @@ if __name__=="__main__":
 				print("Loss for epoch:%d is: %d",epoch,(running_loss/(batchCount*5)))
 				batchCount=0
 				running_loss=0
-		if epoch%5==0 and epoch > 0:
+		print(running_loss) 
+		if(epoch%5==0 and last_save_loss > running_loss):
+			last_save_loss = running_loss
 			torch.save(net.state_dict(),saveDir+'model-'+str(epoch)+'.pth')
