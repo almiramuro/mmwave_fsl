@@ -27,9 +27,9 @@ if __name__=="__main__":
 	dirPath = '../data/'
 
 	# !!! Change users when necessary !!!
-	users = ['aaron', 'mira', 'luis']
+	users = ['aaron', 'luis']
 	
-	_24classes = ['hello', 'nice_meet_you', 'good night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
+	_24classes = ['hello', 'nice_meet_you', 'good_night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
 	_10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
 	saveDir='./checkpoints/'
 	os.makedirs(saveDir, exist_ok=True)
