@@ -308,13 +308,13 @@ if __name__=="__main__":
     repetitions = int(dataFolder.split('_')[-2])
     dataRatio = tuple(int(repetitions*r) for r in ratio) 
 
-    max_x, max_y, max_z = 0,0,0
-    min_x, min_y, min_z = float('inf'),float('inf'),float('inf')
+    # max_x, max_y, max_z = 0,0,0
+    # min_x, min_y, min_z = float('inf'),float('inf'),float('inf')
     
     all_points = np.zeros((0,3)) 
 
-    main_path = os.path.realpath(__file__)
-    currDir = os.path.dirname(main_path)
+    # main_path = os.path.realpath(__file__)
+    # currDir = os.path.dirname(main_path)
 
     processDir = os.path.join(dataDir,dataFolder)
     raw_data = os.listdir(processDir)

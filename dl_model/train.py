@@ -21,7 +21,6 @@ if __name__=="__main__":
 		to use the filePath outdoor_10_train_test_all_glosses
 		
 		!!! Change users when necessary !!!
-
     """
 	setup = sys.argv[1]
 	
@@ -43,9 +42,6 @@ if __name__=="__main__":
 
 	trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
 
-	# logger=createLogger('./scratch','unclustered-gloss-all')
-
-	# logger.info("Training set total number of samples:%s",len(trainDataset))
 
 	torch.manual_seed(1)
 	torch.cuda.manual_seed(1)
