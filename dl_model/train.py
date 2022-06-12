@@ -16,22 +16,29 @@ if __name__=="__main__":
 
         e.g.
         Enter in cmd line:
-            python train.py outdoor_24_signs_15_reps 
+            python train.py outdoor_10_signs_15_reps 
 			
-		to use the filePath outdoor_24_train_test_all_glosses
+		to use the filePath outdoor_10_train_test_all_glosses
+		
+		!!! Change users when necessary !!!
 
     """
 	setup = sys.argv[1]
 	
 	dirPath = '../data/'
+
+	# !!! Change users when necessary !!!
 	users = ['aaron', 'mira', 'luis']
-	classes = ['hello', 'nice_meet_you', 'good night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
+	
+	_24classes = ['hello', 'nice_meet_you', 'good night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
+	_10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
 	saveDir='./checkpoints/'
 	os.makedirs(saveDir, exist_ok=True)
 
-
+	classes = _10classes if(setup.split('_')[1] == '10') else _24classes
 	filePath = '_'.join([setup.split('_')[i] for i in range(2)]) + '_train_test_all_glosses'
-
+	# print(filePath)
+	# print(len(classes))
 	dirPath = '../data/preprocessed_data/'
 
 	trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)

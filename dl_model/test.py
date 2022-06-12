@@ -20,14 +20,19 @@ if __name__=="__main__":
 			- use the filePath outdoor_24_train_test_all_glosses
 			- use modelpath latestmodel.pth
 
+		
+		!!! Change users when necessary !!!
     """
 	
 	setup = sys.argv[1]
 	
+	# !!! Change users when necessary !!!
 	users = ['aaron', 'mira', 'luis']
-
-	classes = ['hello', 'nice_meet_you', 'good night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
-
+	
+	_24classes = ['hello', 'nice_meet_you', 'good night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
+	_10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
+	
+	classes = _10classes if(setup.split('_')[1] == '10') else _24classes
 	filePath = '_'.join([setup.split('_')[i] for i in range(2)]) + '_train_test_all_glosses'
 	dirPath = '../data/preprocessed_data/'
 
