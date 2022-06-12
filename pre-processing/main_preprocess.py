@@ -4,6 +4,7 @@ from sklearn.cluster import DBSCAN
 import pickle
 import pandas as pd
 import os
+import sys
 from saveFigure import saveFig
 from lib.plot import *
 """
@@ -149,19 +150,20 @@ def createMultiview(_3dframe):
 
     return xyframes,yzframes,xzframes
 
-def npySave(view, data, dataSaveDir, imgSaveDir):
+def npySave(view, data, dataSaveDir, imgSaveDir=None):
     """
         view = str, any one of ['xy','yz','xz']
         data = all aggregated frames
-        dataSaveDir = path (os.path.join(currDir, subfolder, filename[:-4]))
-                        (sample: ./data/preprocessed_data/aaron_batangas_1)
+        dataSaveDir = path (os.path.join(currDir, subfolder, place, filename[:-4]))
+                        (sample: ./data/preprocessed_data/indoor_10_signs_15_reps/aaron_batangas_1)
         imgSaveDir = path for image
     """
     outData = []
     count = 1
 
     for frame in data:
-        saveFig(frame,axis=view,pltTitle='Frame-'+str(count), saveDir=imgSaveDir, reSize = True)
+        if(imgSaveDir != None):
+            saveFig(frame,axis=view,pltTitle='Frame-'+str(count), saveDir=imgSaveDir, reSize = True)
         outData.append(saveFig(frame, axis=view, reSize = True, saveNumpy = True))
         count += 1
     
@@ -169,7 +171,7 @@ def npySave(view, data, dataSaveDir, imgSaveDir):
 
     return np.array(outData)
 
-def preprocess(filename, f): 
+def preprocess(processDir, filename, f): 
     """
         To do: 
             - make a bubble
@@ -179,6 +181,7 @@ def preprocess(filename, f):
     
     # Input handling
     """
+        processDir = raw files to process directory 
         filename = string: <name>_<gloss>_<num>.pkl
         f = number of desired aggregated frames
     """
@@ -187,7 +190,7 @@ def preprocess(filename, f):
 
     gloss = filename.split('_')[1]
 
-    with open(filename,"rb") as pm_data:
+    with open(processDir+filename,"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
 
     # Outlier Removal and Translation
@@ -234,23 +237,28 @@ def preprocess(filename, f):
         data['yz'].append(np.concatenate(list(yzf.values())))
         data['xz'].append(np.concatenate(list(xzf.values())))
 
-
-    currDir = os.getcwd()                                                   #dirPath (data)
+    dataDir = processDir.split('/')[1]                          #dirPath (data)
     
-    datafolder = 'preprocessed_data'    
-    imgfolder = 'images'
+    outPath = 'preprocessed_data'    
+    imgPath = 'images'
 
-    dataSaveDir = os.path.join(currDir, datafolder, filename[:-4])            #(data/preprocessed_data/user_gloss_it)
-    imgSaveDir = os.path.join(currDir, imgfolder, filename[:-4])              #(data/images/user_gloss_it)
+    outFolder = processDir.split('/')[2]
+    imgFolder = processDir.split('/')[2]
+
+    print(os.path.join(dataDir, outPath, outFolder , filename[:-4]))
+    print(os.path.join(dataDir, imgPath, imgFolder, filename[:-4]))
+
+    dataSaveDir = os.path.join('..',dataDir, outPath, outFolder , filename[:-4])            #(data/preprocessed_data/place/user_gloss_it)
+    imgSaveDir = os.path.join('..',dataDir, imgPath, imgFolder, filename[:-4])              #(data/images/place/user_gloss_it)
 
     # for data
-    os.makedirs(os.path.join(currDir, datafolder), exist_ok=True)             #inDirs (data/preprocessed_data)
-    os.makedirs(dataSaveDir, exist_ok=True)                                   #inDir  (data/preprocessed_data/user_gloss_it)
+    os.makedirs(dataSaveDir, exist_ok=True)                 #inDirs (data/preprocessed_data/place)
+                                                            #inDir (data/preprocessed_data/place/user_gloss_it)
     
-    # for imgs
-    os.makedirs(os.path.join(currDir, imgfolder), exist_ok=True)            
-    os.makedirs(imgSaveDir, exist_ok=True)                                        
-
+    # for imgs    
+    os.makedirs(imgSaveDir, exist_ok=True)                   #inDirs (data/preprocessed_data/place)
+                                                             #inDir (data/preprocessed_data/place/user_gloss_it)
+                             
     views = ['xy', 'yz', 'xz']
     
     for view in views:
@@ -258,65 +266,35 @@ def preprocess(filename, f):
     
     
 if __name__=="__main__":
+    """
+        run the file: main_preprocess.py #TrainFiles #TestFiles 
+
+        e.g.
+        Enter python main_preprocess.py 80 20 to signify 80:20 ratio for train and test files
+    """
+    dataDir = '../data/'
+    dataFolder = sys.argv[1]+'/'
+    ratio = (float(sys.argv[2])/100, float(sys.argv[3])/100)
+    repetitions = int(dataFolder.split('_')[-2])
+    dataRatio = tuple(int(repetitions*r) for r in ratio) 
+
     max_x, max_y, max_z = 0,0,0
     min_x, min_y, min_z = float('inf'),float('inf'),float('inf')
     
     all_points = np.zeros((0,3)) 
 
-    # with open("aaron_batangas_1.pkl","rb") as pm_data:
-    #     pm_contents = pickle.load(pm_data,encoding ="bytes")
-    
-    # # Outlier Removal and Translation
-    # c = 0
-    # for key, pts in pm_contents.items():
-    #     print(pts[:,:3])
-    #     break
-    #     c += len(pts)
-    #     pm_contents[key] = cluster(pts, e = 0.5, outlier=True)
-    #     pm_contents[key] = normalize(pts)
+    main_path = os.path.realpath(__file__)
+    currDir = os.path.dirname(main_path)
 
-    file_path = os.path.realpath(__file__)
-    currDir = os.path.dirname(file_path)
-    # print(currDir)    
-    
-    os.chdir('..')
-    rootDir = os.getcwd()
-
-    if(currDir != rootDir):
-        os.chdir(rootDir)
+    processDir = os.path.join(dataDir,dataFolder)
+    raw_data = sorted(os.listdir(processDir))
     
 
-    dataDir = 'data'
-    os.chdir(dataDir)
-
-    raw_data = os.listdir()
-    # count = 0
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
-        # count+=1
-        preprocess(file,10)
-    #     print('preprocessed {}'.format(count))
-    d = {0:'x', 1:'y', 2:'z'}
-    pointsdf = pd.DataFrame(all_points)
-    pointsdf.rename(columns = d, inplace=True)
-    pointsdf.to_csv('all_points.csv')
-    
-    # ave_x = np.average(all_points[:,0])
-    # ave_y = np.average(all_points[:,1])
-    # ave_z = np.average(all_points[:,2])
-
-    # print('x: min {:0.5f} max {:0.5f} ave {:0.5f}'.format(np.min(all_points[:,0]),np.max(all_points[:,0]),ave_x))
-    # print('y: min {:0.5f} max {:0.5f} ave {:0.5f}'.format(np.min(all_points[:,1]),np.max(all_points[:,1]),ave_y))
-    # print('z: min {:0.5f} max {:0.5f} ave {:0.5f}'.format(np.min(all_points[:,2]),np.max(all_points[:,2]),ave_z))
-    # print('count:')
-    # print('total num of points:', len(all_points))
-    # print('x > 2: ', np.count_nonzero(all_points[:,0] > 2))
-    # print('y > 2: ', np.count_nonzero(all_points[:,1] > 2))
-    # print('z > 2: ', np.count_nonzero(all_points[:,2] > 2))
-    # print('x > 1: ', np.count_nonzero(all_points[:,0] > 1))
-    # print('y > 1: ', np.count_nonzero(all_points[:,1] > 1))
-    # print('z > 1: ', np.count_nonzero(all_points[:,2] > 1))
-
-    # with open("aaron_batangas_1.pkl","rb") as f:
-    #     pm_contents = pickle.load(f)
-    
+        preprocess(processDir,file,10)
+        
+    # d = {0:'x', 1:'y', 2:'z'}
+    # pointsdf = pd.DataFrame(all_points)
+    # pointsdf.rename(columns = d, inplace=True)
+    # pointsdf.to_csv('all_points.csv')
