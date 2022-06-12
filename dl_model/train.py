@@ -38,7 +38,7 @@ if __name__=="__main__":
 	filePath = '_'.join([setup.split('_')[i] for i in range(2)]) + '_train_test_all_glosses'
 	# print(filePath)
 	# print(len(classes))
-	dirPath = '../data/preprocessed_data/'
+	dirPath = '../data/preprocessed_data/'+setup
 
 	trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
 
@@ -55,6 +55,7 @@ if __name__=="__main__":
 	multiViewDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)
 	criterion=nn.CrossEntropyLoss()
 	net.train()
+	last_save_loss = float('inf')
 	for epoch in range(400):
 		running_loss=0
 		batchCount=0

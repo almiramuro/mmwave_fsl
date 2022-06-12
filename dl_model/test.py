@@ -34,7 +34,7 @@ if __name__=="__main__":
 	
 	classes = _10classes if(setup.split('_')[1] == '10') else _24classes
 	filePath = '_'.join([setup.split('_')[i] for i in range(2)]) + '_train_test_all_glosses'
-	dirPath = '../data/preprocessed_data/'
+	dirPath = '../data/preprocessed_data/'+setup
 
 	testDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=False,frameCount=10,wordOnly=True)
 
