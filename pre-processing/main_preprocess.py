@@ -171,7 +171,31 @@ def npySave(view, data, dataSaveDir, imgSaveDir=None):
 
     return np.array(outData)
 
-def preprocess(processDir, filename, f): 
+def createTrainTestFile(dataFolder, raw_data, dataRatio):
+    modelFolder = os.path.join('..','dl_model')
+    cue = '_'.join([dataFolder.split('_')[i] for i in range(2)])
+
+    outFileTxt = cue+'_train_test_all_glosses'
+    
+    towrite = []
+
+    # print(dataRatio[0])
+
+    count = 0
+    for d in range(len(raw_data)):
+        if(count == dataRatio[0]+dataRatio[1]): count = 0
+        if(count < dataRatio[0]):
+            towrite.append("Train,"+raw_data[d][:-4])
+        else:
+            towrite.append("Test,"+raw_data[d][:-4])
+        count += 1
+
+    out = open(os.path.join(modelFolder,outFileTxt), 'w')
+    out.writelines('\n'.join(towrite))    
+
+    # print(os.listdir(modelFolder))
+
+def preprocess(processDir, filename, f, saveImg): 
     """
         To do: 
             - make a bubble
@@ -190,7 +214,7 @@ def preprocess(processDir, filename, f):
 
     gloss = filename.split('_')[1]
 
-    with open(processDir+filename,"rb") as pm_data:
+    with open(os.path.join(processDir,filename),"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
 
     # Outlier Removal and Translation
@@ -205,8 +229,6 @@ def preprocess(processDir, filename, f):
     
     # Aggregate Frames
     aggframes = decay(pm_contents, c, f)
-    # print(aggframes)
-
 
     # Cluster
 
@@ -245,8 +267,7 @@ def preprocess(processDir, filename, f):
     outFolder = processDir.split('/')[2]
     imgFolder = processDir.split('/')[2]
 
-    print(os.path.join(dataDir, outPath, outFolder , filename[:-4]))
-    print(os.path.join(dataDir, imgPath, imgFolder, filename[:-4]))
+    print(filename[:-4])
 
     dataSaveDir = os.path.join('..',dataDir, outPath, outFolder , filename[:-4])            #(data/preprocessed_data/place/user_gloss_it)
     imgSaveDir = os.path.join('..',dataDir, imgPath, imgFolder, filename[:-4])              #(data/images/place/user_gloss_it)
@@ -260,20 +281,29 @@ def preprocess(processDir, filename, f):
                                                              #inDir (data/preprocessed_data/place/user_gloss_it)
                              
     views = ['xy', 'yz', 'xz']
+
+    img = None if(saveImg == False) else imgSaveDir
     
     for view in views:
-        npySave(view, data[view], dataSaveDir, imgSaveDir)
+        npySave(view, data[view], dataSaveDir , img)
     
     
 if __name__=="__main__":
     """
-        run the file: main_preprocess.py #TrainFiles #TestFiles 
+        run the file: main_preprocess.py rawfilepath_ ratio 
 
         e.g.
-        Enter python main_preprocess.py 80 20 to signify 80:20 ratio for train and test files
+        Enter in cmd line:
+            python main_preprocess.py outdoor_24_signs_15_reps 80 20 
+        to signify: 
+            - the folder to process is outdoor_24_signs_15_reps 
+            - use a 80:20 ratio for train and test files
     """
+    saveImg = input("Enter Y to save preprocessed images: ")
+    saveImg = True if(saveImg.upper()=="Y") else False
+
     dataDir = '../data/'
-    dataFolder = sys.argv[1]+'/'
+    dataFolder = sys.argv[1]
     ratio = (float(sys.argv[2])/100, float(sys.argv[3])/100)
     repetitions = int(dataFolder.split('_')[-2])
     dataRatio = tuple(int(repetitions*r) for r in ratio) 
@@ -287,13 +317,15 @@ if __name__=="__main__":
     currDir = os.path.dirname(main_path)
 
     processDir = os.path.join(dataDir,dataFolder)
-    raw_data = sorted(os.listdir(processDir))
-    
+    raw_data = os.listdir(processDir)
+
+    print(len(raw_data))
 
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
-        preprocess(processDir,file,10)
-        
+        preprocess(processDir,file,10,saveImg)
+    
+    createTrainTestFile(dataFolder,raw_data,dataRatio)
     # d = {0:'x', 1:'y', 2:'z'}
     # pointsdf = pd.DataFrame(all_points)
     # pointsdf.rename(columns = d, inplace=True)
