@@ -49,13 +49,12 @@ if __name__=="__main__":
 	torch.backends.cudnn.deterministic = True
 
 
-	net=wordNet(2048,len(classes),2,5,0.65,use_cuda=True,frameCount=10,dataParallel=False)		# 40 changed to 10 ; 10 changed to 5
+	net=wordNet(2048,len(classes),2,5,0.65,use_cuda=True,frameCount=10,dataParallel=True)		# 40 changed to 10 ; 10 changed to 5
 
 	optimizer=optim.Adam(net.parameters(),lr=0.000001)
 	multiViewDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)
 	criterion=nn.CrossEntropyLoss()
 	net.train()
-	last_save_loss = float('inf')
 	for epoch in range(400):
 		running_loss=0
 		batchCount=0
@@ -68,10 +67,8 @@ if __name__=="__main__":
 			running_loss+=loss.item()
 			batchCount+=1
 			if batchCount==5:
-				print("Loss for epoch:%d is: %d",epoch,(running_loss/(batchCount*5)))
+				print("Loss for epoch:%d is: %d"%(epoch,running_loss/(batchCount*5)))
 				batchCount=0
 				running_loss=0
-		print(running_loss) 
-		if(epoch%5==0 and last_save_loss > running_loss):
-			last_save_loss = running_loss
+		if(epoch%5==0 and epoch > 0):
 			torch.save(net.state_dict(),saveDir+'model-'+str(epoch)+'.pth')
