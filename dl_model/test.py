@@ -17,7 +17,7 @@ if __name__=="__main__":
 
         e.g.
         Enter in cmd line:
-            python test.py outdoor_24_signs_15_reps latest-model.pth
+            python test.py outdoor_24_train_test_all_glosses latest-model.pth
 		to signify:
 			- use the filePath outdoor_24_train_test_all_glosses
 			- use modelpath latest-model.pth
@@ -65,4 +65,5 @@ if __name__=="__main__":
 	print("The confusion Matrix is")
 	print(confusion)
 	ConfusionMatrixDisplay.from_predictions(labels,predictions)
-	plt.show()
+	figFile = 'testfile-%s_and_model-%s'%(setup,_model[:-4])
+	plt.savefig(figFile + '.png')

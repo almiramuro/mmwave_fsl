@@ -17,6 +17,12 @@ import torch.functional as F
 from torchvision.utils import save_image
 from PIL import Image
 
+def localize(x):
+	if(torch.cuda.is_available()):
+		return x.cuda()
+	else:
+		return x
+
 def doMultiProcessing(inFunc,inDir,split,arguments,noJobs=16):
 	processes=[]
 	count=0
@@ -175,8 +181,6 @@ class multiViewDatasetConcat(Dataset):
 		filePath='./train_test_all_glosses'
 
 		dirPath = '../data/preprocessed_data'
-
-
 
 	"""
 	# trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
