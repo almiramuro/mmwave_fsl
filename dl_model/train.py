@@ -102,10 +102,11 @@ if __name__=="__main__":
 			
 			if(leadingAccuracy == 0):
 				leadingModel = _newmodel
+				continue
 			
 			if(accuracy > leadingAccuracy):
 				os.remove(leadingModel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
-			else:
+			elif(accuracy < leadingAccuracy):
 				os.remove(_newmodel)
