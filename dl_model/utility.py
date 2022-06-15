@@ -5,7 +5,7 @@ from string import digits
 import numpy as np
 import torch
 import logging 
-from sklearn.metrics import accuracy_score,confusion_matrix
+from sklearn.metrics import accuracy_score,confusion_matrix, ConfusionMatrixDisplay
 import itertools
 from asr_evaluation import __main__
 import os
@@ -317,6 +317,7 @@ def createLogger(inDir,logFile):
 	return logging.getLogger()
 
 def computeAccuracy(labels,predictions,classes):
+	
 	return confusion_matrix(labels,predictions,labels=classes),accuracy_score(labels,predictions)
 
 def compute_wer(ref,hyp):

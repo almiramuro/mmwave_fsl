@@ -12,35 +12,6 @@ with open(filename+'.pkl', 'rb') as handle:
 print(data)
 
 t = list(data.keys())
-# print(data[t[0]][0][3])
-# print(data[1652948719.6900349])
-
-# for timestamp in t:
-#     for point in data[timestamp]:
-#         print(timestamp, 10*log10(point[3]))
-        
-
-# with open(filename+'.txt', 'w') as f:
-#     for timestamp in t:
-#         for point in data[timestamp]:
-#             x = point[0]
-#             y = point[1]
-#             z = point[2]
-#             intensity = "{0:.4f}".format(10*log10(point[3]))
-#             time = int(timestamp*100)
-#             f.write("x::{} y::{} z::{} intensity::{} time::{}".format(x, y, z, intensity, time))
-#             f.write('\n')
-
-
-# --- PLOT ---
-# def update(timestamp):
-#     xs_ = data[timestamp][:,0]
-#     ys_ = data[timestamp][:,1]
-#     zs_ = data[timestamp][:,2]
-#     graph._offsets3d = (xs_, ys_, zs_)
-#     title = ax.set_title('3D Test, time={}'.format(timestamp))
-    
-
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

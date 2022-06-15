@@ -12,7 +12,7 @@ import sys
 
 if __name__=="__main__":
 	"""
-        run the file: train.py	datasetfolder
+        run the file: train.py datasetfolder
 
         e.g.
         Enter in cmd line:
@@ -20,14 +20,12 @@ if __name__=="__main__":
 			
 		to use the filePath outdoor_10_train_test_all_glosses
 		
-		!!! Change users when necessary !!!
     """
 	setup = sys.argv[1]
 	
 	dirPath = '../data/'
 
-	# !!! Change users when necessary !!!
-	users = ['aaron', 'luis']
+	# users = ['aaron', 'mira', 'luis']
 	
 	_24classes = ['hello', 'nice_meet_you', 'good_night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
 	_10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
