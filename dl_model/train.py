@@ -3,7 +3,7 @@ import sys
 from utility import createTrainTest,localize,multiViewDatasetConcat,computeAccuracy
 from sklearn.metrics import ConfusionMatrixDisplay
 from torch.utils.data import DataLoader
-if(sys.platform == 'linux'):
+if(sys.platform == 'linux' or sys.platform == 'win32'):
 	from model import wordNet
 else:
 	from dl_model.model import wordNet
@@ -64,9 +64,9 @@ if __name__=="__main__":
 	trainDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)
 	testDataLoader=DataLoader(testDataset,5,shuffle=False)
 	criterion=nn.CrossEntropyLoss()
-	net.train()
 	leadingAccuracy = 0
 	for epoch in range(400):
+		net.train()
 		running_loss=0
 		batchCount=0
 		for x,label in trainDataLoader:		
@@ -82,7 +82,7 @@ if __name__=="__main__":
 				batchCount=0
 				running_loss=0
 
-		if(epoch%5==0 and epoch > 0):
+		if((epoch+1)%5==0 and epoch > 0):
 			torch.save(net.state_dict(),saveDir+'/'+'model-'+str(epoch)+'.pth')
 			
 			_newmodel = 'model-'+str(epoch)+'.pth'
@@ -109,11 +109,9 @@ if __name__=="__main__":
 				leadingAccuracy = accuracy
 				continue
 
-			if(accuracy > leadingAccuracy):
+			if(accuracy >= leadingAccuracy):
 				os.remove(saveDir+'/'+leadingModel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
 			elif(accuracy < leadingAccuracy):
 				os.remove(saveDir+'/'+_newmodel)
-			
-			net.train()
