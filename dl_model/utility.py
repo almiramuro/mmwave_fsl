@@ -60,120 +60,10 @@ def getLabel(inFile,nonManual=None,classes=None,withCount=False,includeMan=False
 				return [k for k,v in enumerate(classes) if v in inFile][0] 
 			except:
 				return None
-		
-		if onlyNonManual:	# ignore for word only
-			if any([label in nonManual for label in inFile.split('/')[-1].split('_')[1].split('-')[:-1]]):
-				return nonManual.index(inFile.split('/')[-1].split('_')[1].split('-')[:-1][-1])
-			else:
-				return nonManual.index('manual')
-		
-		# segmenting the labels
-		if 'teach' in inFile: 
-			return [classes.index(label) for label in ['you','teachme']] 
-		
-		if any([label in nonManual for label in inFile.split('/')[-1].split('_')[1].split('-')[:-1]]):
-			labels=inFile.split('/')[-1].split('_')[1].split('-')[:-2]
-		else:
-			labels=inFile.split('/')[-1].split('_')[1].split('-')[:-1]
-		
-		frmCls=None
-		if "-i-"  in inFile:
-			frmCls=labels.index('i')
-		elif "-my-" in inFile:
-			frmCls=labels.index('my')
-		if frmCls is not None:
-			labels[frmCls]='me'
-
-
-
-		if any([label not in classes for label in labels]):
-			# if any of the elements inside of the any function (a label in labels not in classes)
-			return None
-		else:
-			# all label in labels are in classes
-			return [classes.index(label) for label in labels if label in classes]
-
-
-	# ignore
-	user=inFile.strip().split('/')[-1].split('_')[0]
-	name=inFile.strip().split('/')[-1].split('.')[0]
-	if wordOnly:
-		return name.split('_')[1:-1][0]
-	if withCount and includeMan:
-		return name.split('_')[1:]
-
-	if any([label in name for label in nonManual]):
-		return name.split('_')[1:-2]
-	else:
-		return name.split('_')[1:-1]
-
-def getTargetPadded(targets,classes):
-	maxLen=max([len(target) for target in targets])
-	targets=[[classes.index(cls) for cls in target] for target in targets]
-	paddedTargets=np.full((len(targets),maxLen),fill_value=(len(classes)-1),dtype='i')
-	for e,l in enumerate(targets):
-		paddedTargets[e,:len(l)]=l
-	return paddedTargets
-
-def getUser(inFile):
-	user=inFile.strip().split('/')[-1].split('_')[0]
-	name=inFile.strip().split('/')[-1]
-	return user
 
 def getDedup(k):
 	k.sort()
 	return list(k for k,_ in itertools.groupby(k))
-
-def createTrainTest(userDirs,users,testCount,outFile,classes,targets=None,nonManual=None):
-	classCount={}
-	out=open(outFile,'w')
-	for user in users:
-		if targets is not None:
-			for cls in targets:
-				classCount[user+'-'+'-'.join(cls)]=0
-		else:
-			for cls in classes:
-				classCount[user+'-'+'-'.join([cls])]=0
-	for userDir in userDirs:
-		inFiles=glob.glob(userDir+'/*')
-		for inFile in inFiles:
-			user=getLower(getUser(inFile))
-			if targets is not None:
-				labels=getLabel(inFile,nonManual)
-				fromIndex=None
-				if 'me' in classes:
-					if any([label not in classes for label in labels if label != 'my' and label != 'i']):
-						continue
-				else:
-					if any([label not in classes for label in labels]):
-						continue
-				if 'i' in labels:
-					fromIndex=labels.index('i')
-				elif 'my' in labels:
-					fromIndex=labels.index('my')
-				if fromIndex is not None:
-					labels[fromIndex]='me'
-				try:
-					count=classCount[user+'-'+'-'.join(labels)]
-				except:
-					print(inFile,labels)
-				if 'teach' in inFile:
-					labels=['you','teachme']
-				if classCount[user+'-'+'-'.join(labels)] < testCount:
-					out.write("Test , {}\n".format(inFile.split('/')[-1]))
-					classCount[user+'-'+'-'.join(labels)]+=1
-				else:
-					out.write("Train , {}\n".format(inFile.split('/')[-1]))
-			else:	
-				label=getLabel(inFile,wordOnly=True)
-				user=getLower(inFile.strip().split('/')[-1].split('_')[0])
-				name=inFile.strip().split('/')[-1].split('.')[0]
-				dirName=name.split('_')[1]+name.split('_')[2].split('.')[0]
-				if classCount[user+'-'+label] < testCount:
-					out.write("Test , {}\n".format(user+'_'+dirName))
-					classCount[user+'-'+label]+=1
-				else:
-					out.write("Train , {}\n".format(user+'_'+dirName))
 
 class multiViewDatasetConcat(Dataset):
 	"""
@@ -315,15 +205,7 @@ class multiViewDatasetConcat(Dataset):
 
 		return data,labels,files
 
-
-def createLogger(inDir,logFile):
-	logging.basicConfig(level=logging.INFO,
-		format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
-		handlers=[logging.FileHandler("{0}/{1}.log".format(inDir, logFile)),logging.StreamHandler()])
-	return logging.getLogger()
-
 def computeAccuracy(labels,predictions,classes):
-	
 	return confusion_matrix(labels,predictions,labels=classes),accuracy_score(labels,predictions)
 
 def compute_wer(ref,hyp):

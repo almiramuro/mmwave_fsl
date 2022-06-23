@@ -1,6 +1,6 @@
 ﻿import os
 import sys
-from utility import createTrainTest,localize,multiViewDatasetConcat,computeAccuracy
+from utility import localize,multiViewDatasetConcat,computeAccuracy
 from sklearn.metrics import ConfusionMatrixDisplay
 from torch.utils.data import DataLoader
 if(sys.platform == 'linux' or sys.platform == 'win32'):
@@ -27,23 +27,23 @@ if __name__=="__main__":
 		to use the filePath outdoor_test_all_glosses for testing
 
     """
-	# Text files 
-	# print(sys.argv)
+	# Text files containing the train and test
 	trainFilePath = '_'.join([sys.argv[1].split('-')[1],'train_test_all_glosses'])		#outdoor_24_luishome
 	testFilePath = '_'.join([sys.argv[2].split('-')[1], 'train_test_all_glosses'])		#outdoor_24_luishome
-		
-	dirPath = '../data/'
-
-	# users = ['aaron', 'mira', 'luis']
+	
 	classes = open('glosses','r',encoding='utf-8-sig').readlines()
 	classes = [ gloss.strip() for gloss in classes ]
 	# _10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
+	
+	
+	# Directory where to save model checkpoints
 	saveDir='./checkpoints/'
 	os.makedirs(saveDir, exist_ok=True)
-	saveDir='./checkpoints/'+ sys.argv[1].split('-')[1] + '-to-' + sys.argv[2].split('-')[1]
+	saveDir='./checkpoints/'+ sys.argv[1].split('-')[1] + '-to-' + sys.argv[2].split('-')[1] + '/'
 	os.makedirs(saveDir, exist_ok=True)
 
-	
+
+	# Directory path containing the files
 	trainDirPath = '../data/preprocessed_data/'+ trainFilePath.removesuffix('_train_test_all_glosses')
 	testDirPath = '../data/preprocessed_data/'+ testFilePath.removesuffix('_train_test_all_glosses')
 
@@ -83,9 +83,10 @@ if __name__=="__main__":
 				running_loss=0
 
 		if((epoch+1)%5==0 and epoch > 0):
-			torch.save(net.state_dict(),saveDir+'/'+'model-'+str(epoch)+'.pth')
-			
 			_newmodel = 'model-'+str(epoch)+'.pth'
+
+			torch.save(net.state_dict(),saveDir+_newmodel)
+			
 			m=nn.Softmax(dim=1)
 			predictions=[]
 			labels=[]
@@ -110,8 +111,8 @@ if __name__=="__main__":
 				continue
 
 			if(accuracy >= leadingAccuracy):
-				os.remove(saveDir+'/'+leadingModel)
+				os.remove(saveDir+leadingModel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
 			elif(accuracy < leadingAccuracy):
-				os.remove(saveDir+'/'+_newmodel)
+				os.remove(saveDir+_newmodel)

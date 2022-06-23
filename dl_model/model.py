@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 
 class wordNet(nn.Module):
-	# net=wordNet(2048,len(classes),2,5,0.65,True,10,True)
 	def __init__(self,hidden_dim,class_size,num_layers,batch_size,dropout,use_cuda,frameCount,dataParallel=False):
 		super(wordNet,self).__init__()
 		self.hidden_dim=hidden_dim		#2048
@@ -127,25 +126,6 @@ class wordNet(nn.Module):
 			# 74 = ?
 			# 100 = ?
 
-			"""
-				nn.Sequential(
-					nn.Conv2d(in=3,out=16,(5,5),padding=(2,2)),
-					nn.ReLU(),
-					nn.MaxPool2d((2,2),2),
-
-					nn.Conv2d(in=16,out=32,(5,5),padding=(2,2)),
-					nn.ReLU(),
-					nn.MaxPool2d((2,2),2),
-
-					nn.Conv2d(in=32,out=64,(5,5),padding=(2,2)),
-					nn.ReLU(),
-					nn.MaxPool2d((2,2),2),
-
-					nn.Conv2d(in=64,out=128,(5,5),padding=(2,2)),
-					nn.ReLU(),
-					nn.MaxPool2d((2,2),2)
-				)))
-			"""
 			x1=self.modules[view](x1)						# undergo the sequential model forwarding CNN
 			x1=x1.reshape(self.batch,self.frameCount,-1)	# reshape to 3D tensor with shape (self.batch, self.frameCount, everything else concatenated into 1 tensor)
 			if finalLayer is None:

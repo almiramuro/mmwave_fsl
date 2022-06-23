@@ -10,10 +10,6 @@ if __name__ == '__main__':
     processDirs = [os.path.join('data',dataDirs[i]) for i in range(3)]
     raw_files = [ os.listdir(processDirs[i]) for i in range(3)]
 
-    # print(len(raw_files))
-    # for i in range(len(raw_files)):
-    #     print(len(raw_files[i]))
-
     src = []
     dst = []
     for i in range(3):

@@ -1,4 +1,4 @@
-﻿from utility import createLogger,multiViewDatasetConcat,computeAccuracy
+﻿from utility import multiViewDatasetConcat,computeAccuracy
 from torch.utils.data import DataLoader
 from model import wordNet
 import numpy as np 
@@ -10,31 +10,29 @@ import torch.nn.functional as F
 import sys
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
+import os
 
 if __name__=="__main__":
 	"""
-        run the file: test.py datasetfolder modelname
+        run the file: test.py datasetfolder modelpath
 
         e.g.
         Enter in cmd line:
-            python test.py outdoor_24_train_test_all_glosses latest-model.pth
+            python test.py outdoor outdoor-to-outdoor/latest-model.pth
 		to signify:
-			- use the filePath outdoor_24_train_test_all_glosses
-			- use modelpath latest-model.pth
+			- use the filePath: outdoor_train_test_all_glosses
+			- use modelpath: outdoor-to-outdoor/latest-model.pth
 
     """
 	
 	setup, _model= sys.argv[1], sys.argv[2]
 	
-	
-	# users = ['aaron', 'mira', 'luis']
-	
-	_24classes = ['hello', 'nice_meet_you', 'good_night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
-	_10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
-	
-	classes = _10classes if(setup.split('_')[1] == '10') else _24classes
-	filePath = '_'.join([setup.split('_')[i] for i in range(2)]) + '_train_test_all_glosses'
-	dirPath = '../data/preprocessed_data/'+setup
+	classes = open('glosses','r',encoding='utf-8-sig').readlines()
+	classes = [ gloss.strip() for gloss in classes ]
+	# _10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
+
+	filePath = setup + '_train_test_all_glosses'
+	dirPath = '../data/preprocessed_data/' + setup
 
 	testDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=False,frameCount=10,wordOnly=True)
 
@@ -44,7 +42,7 @@ if __name__=="__main__":
 	torch.backends.cudnn.deterministic = True
 
 	net=wordNet(2048,len(classes),2,5,0.65,False,10,True)
-	modelPath='./'+_model
+	modelPath='./checkpoints/'+_model
 	net.load_state_dict(torch.load(modelPath,map_location='cpu'),strict=False)
 	m=nn.Softmax(dim=1)
 	predictions=[]
@@ -62,8 +60,8 @@ if __name__=="__main__":
 		count += 1
 	confusion,accuracy=computeAccuracy(labels,predictions,[i for i in range(len(classes))])
 	print("The accuracy for %s using %s is: %f"%(setup,_model,accuracy))
-	print("The confusion Matrix is")
+	print("The Confusion Matrix is")
 	print(confusion)
 	ConfusionMatrixDisplay.from_predictions(labels,predictions)
-	figFile = 'testfile-%s_and_model-%s'%(setup,_model[:-4])
-	plt.savefig(figFile + '.png')
+	figFile = 'test-%s_model-%s'%(setup,_model.split('/')[0])
+	plt.savefig(os.path.join('confusion_matrices',figFile + '.png'))
