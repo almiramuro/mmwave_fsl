@@ -31,28 +31,3 @@ for s in t:
     q.append(data[s])
 
 print(q)
-# test = q.popleft()
-# print(test)
-
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# title = ax.set_title('3D Test')
-
-# ax.set_xlabel('x [m]')
-# ax.set_ylabel('y [m]')
-# ax.set_zlabel('z [m]')
-# ax.set_xlim3d(-3, 3)
-# ax.set_ylim3d(-3, 3)
-# ax.set_zlim3d(-3, 3)
-
-# points = data[t[0]]
-
-# xs = points[:,0]
-# ys = points[:,1]
-# zs = points[:,2]
-
-# graph = ax.scatter(xs, ys, zs)
-# # ax.scatter(xs, ys, zs)
-
-# fig.canvas.draw()
-# plt.show(block=False)

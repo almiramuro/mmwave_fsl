@@ -7,5 +7,6 @@ share
 etc
 .ipynb_checkpoints
 .DS_Store
-model/checkpoints
+dl_model/checkpoints
 *pth
+data/images

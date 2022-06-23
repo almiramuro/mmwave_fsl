@@ -150,7 +150,7 @@ def createMultiview(_3dframe):
 
     return xyframes,yzframes,xzframes
 
-def npySave(view, data, dataSaveDir, imgSaveDir=None):
+def npySave(view, data, dataSaveDir=None, imgSaveDir=None):
     """
         view = str, any one of ['xy','yz','xz']
         data = all aggregated frames
@@ -166,8 +166,8 @@ def npySave(view, data, dataSaveDir, imgSaveDir=None):
             saveFig(frame,axis=view,pltTitle='Frame-'+str(count), saveDir=imgSaveDir, reSize = True)
         outData.append(saveFig(frame, axis=view, reSize = True, saveNumpy = True))
         count += 1
-    
-    np.save(dataSaveDir+'/'+view+'.npy', np.array(outData))
+    if(dataSaveDir != None):
+        np.save(dataSaveDir+'/'+view+'.npy', np.array(outData))
 
     return np.array(outData)
 
@@ -195,7 +195,7 @@ def createTrainTestFile(dataFolder, raw_data, dataRatio):
 
     # print(os.listdir(modelFolder))
 
-def preprocess(processDir, filename, f, saveImg): 
+def preprocess(processDir, filename, f, saveData=True, saveImg=False): 
     """
         To do: 
             - make a bubble
@@ -210,10 +210,6 @@ def preprocess(processDir, filename, f, saveImg):
         f = number of desired aggregated frames
     """
     
-    global all_points
-
-    gloss = filename.split('_')[1]
-
     with open(os.path.join(processDir,filename),"rb") as pm_data:
         pm_contents = pickle.load(pm_data,encoding ="bytes")
 
@@ -283,9 +279,10 @@ def preprocess(processDir, filename, f, saveImg):
     views = ['xy', 'yz', 'xz']
 
     img = None if(saveImg == False) else imgSaveDir
+    npdata = None if(saveData == False) else dataSaveDir
     
     for view in views:
-        npySave(view, data[view], dataSaveDir , img)
+        npySave(view, data[view], npdata, img)
     
     
 if __name__=="__main__":
@@ -299,6 +296,7 @@ if __name__=="__main__":
             - the folder to process is outdoor_24_signs_15_reps 
             - use a 80:20 ratio for train and test files
     """
+    saveData = False
     saveImg = input("Enter Y to save preprocessed images: ")
     saveImg = True if(saveImg.upper()=="Y") else False
 
@@ -307,15 +305,7 @@ if __name__=="__main__":
     ratio = (float(sys.argv[2])/100, float(sys.argv[3])/100)
     repetitions = 15
     dataRatio = tuple(int(repetitions*r) for r in ratio) 
-
-    # max_x, max_y, max_z = 0,0,0
-    # min_x, min_y, min_z = float('inf'),float('inf'),float('inf')
     
-    all_points = np.zeros((0,3)) 
-
-    # main_path = os.path.realpath(__file__)
-    # currDir = os.path.dirname(main_path)
-
     processDir = os.path.join(dataDir,dataFolder)
     raw_data = os.listdir(processDir)
 
@@ -324,9 +314,10 @@ if __name__=="__main__":
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
         if('lazy' in file): continue
-        pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
-        if(os.path.isdir(pathCheck)): continue
-        preprocess(processDir,file,10,saveImg)
+        if(saveData == True):
+            pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
+            if(os.path.isdir(pathCheck)): continue
+        preprocess(processDir,file,10, saveData, saveImg)
         processed_data.append(file)
     
     createTrainTestFile(dataFolder,processed_data,dataRatio)
