@@ -210,19 +210,21 @@ class multiViewDatasetConcat(Dataset):
 
 		# Get filenames list
 		if train:
-			f=[f.strip().split(',')[1].strip() for f in f if 'Train' in f]
+			f=[f.strip().split(',')[1].strip()[:-4] for f in f if 'Train' in f]
 		else:
-			f=[f.strip().split(',')[1].strip() for f in f if 'Test' in f]
+			f=[f.strip().split(',')[1].strip()[:-4] for f in f if 'Test' in f]
 		
 		
 		self.fileList=f								# filenames list
+		# print(self.fileList)
 		self.fileListLow=[f.lower() for f in f]		# lowercase everything
 
 		inDirs=glob.glob(dirPath+'/*')				# list containing the folder names in the format <user_gloss_it>
 		
 		# get the files in the Directory that are in the fileList
 		inDirs=[inDir.replace('\\','/') for inDir in inDirs]
-		inDirs=[inDir for inDir in inDirs if getLower(inDir.split('/')[-1]) in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow]
+		# print(inDirs)
+		inDirs=[inDir for inDir in inDirs if(inDir.split('/')[-1] in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow)]
 		# print(inDirs)
 		self.data,self.labels,self.inFiles=self.loadData(inDirs)
 		

@@ -305,7 +305,7 @@ if __name__=="__main__":
     dataDir = '../data/'
     dataFolder = sys.argv[1]
     ratio = (float(sys.argv[2])/100, float(sys.argv[3])/100)
-    repetitions = int(dataFolder.split('_')[-2])
+    repetitions = 15
     dataRatio = tuple(int(repetitions*r) for r in ratio) 
 
     # max_x, max_y, max_z = 0,0,0
@@ -323,6 +323,9 @@ if __name__=="__main__":
 
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
+        if('lazy' in file): continue
+        pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
+        if(os.path.isdir(pathCheck)): continue
         preprocess(processDir,file,10,saveImg)
     
     createTrainTestFile(dataFolder,raw_data,dataRatio)

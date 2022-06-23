@@ -21,29 +21,33 @@ if __name__=="__main__":
 
         e.g.
         Enter in cmd line:
-            python train.py outdoor_24 train-luishome test-floor2 
+            python train.py train-outdoor test-outdoor 
 			
-		to use the filePath outdoor_24_train_test_all_glosses for training
-		to use the filePath outdoor_24_test_all_glosses for testing
+		to use the filePath outdoor_train_test_all_glosses for training
+		to use the filePath outdoor_test_all_glosses for testing
 
     """
 	# Text files 
-	trainFilePath = '_'.join([sys.argv[1],sys.argv[2].split('-')[1],'train_test'])		#outdoor_24_luishome
-	testFilePath = '_'.join([sys.argv[1],sys.argv[3].split('-')[1], 'train_test'])		#outdoor_24_luishome
+	# print(sys.argv)
+	trainFilePath = '_'.join([sys.argv[1].split('-')[1],'train_test_all_glosses'])		#outdoor_24_luishome
+	testFilePath = '_'.join([sys.argv[2].split('-')[1], 'train_test_all_glosses'])		#outdoor_24_luishome
 		
 	dirPath = '../data/'
 
 	# users = ['aaron', 'mira', 'luis']
-	
-	_24classes = ['hello', 'nice_meet_you', 'good_night', 'sign_name', 'how_you', 'why', 'sleep', 'calendar', 'cook', 'computer', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'bulacan', 'bicol', 'flood', 'go_home', 'corruption', 'body', 'life', 'graduate']
-	_10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
+	classes = open('glosses','r',encoding='utf-8-sig').readlines()
+	classes = [ gloss.strip() for gloss in classes ]
+	# _10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
 	saveDir='./checkpoints/'
 	os.makedirs(saveDir, exist_ok=True)
+	saveDir='./checkpoints/'+ sys.argv[1].split('-')[1] + '-to-' + sys.argv[2].split('-')[1]
+	os.makedirs(saveDir, exist_ok=True)
 
-	classes = _10classes if(trainFilePath.split('_')[1] == '10') else _24classes
 	
-	trainDirPath = '../data/preprocessed_data/'+ trainFilePath.removesuffix('_train_test')
-	testDirPath = '../data/preprocessed_data/'+ testFilePath.removesuffix('_train_test')
+	trainDirPath = '../data/preprocessed_data/'+ trainFilePath.removesuffix('_train_test_all_glosses')
+	testDirPath = '../data/preprocessed_data/'+ testFilePath.removesuffix('_train_test_all_glosses')
+
+	print(trainDirPath,testDirPath)
 
 	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,train=True,frameCount=10,wordOnly=True)
 	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,train=False,frameCount=10,wordOnly=True)
@@ -78,7 +82,7 @@ if __name__=="__main__":
 				batchCount=0
 				running_loss=0
 
-		if(epoch%5==0):
+		if(epoch%5==0 and epoch > 0):
 			torch.save(net.state_dict(),saveDir+'model-'+str(epoch)+'.pth')
 			
 			_newmodel = 'model-'+str(epoch)+'.pth'
