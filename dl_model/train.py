@@ -83,7 +83,7 @@ if __name__=="__main__":
 				running_loss=0
 
 		if(epoch%5==0 and epoch > 0):
-			torch.save(net.state_dict(),saveDir+'model-'+str(epoch)+'.pth')
+			torch.save(net.state_dict(),saveDir+'/'+'model-'+str(epoch)+'.pth')
 			
 			_newmodel = 'model-'+str(epoch)+'.pth'
 			m=nn.Softmax(dim=1)
@@ -106,13 +106,14 @@ if __name__=="__main__":
 			
 			if(leadingAccuracy == 0):
 				leadingModel = _newmodel
+				leadingAccuracy = accuracy
 				continue
 
 			if(accuracy > leadingAccuracy):
-				os.remove(saveDir+leadingModel)
+				os.remove(saveDir+'/'+leadingModel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
 			elif(accuracy < leadingAccuracy):
-				os.remove(saveDir+_newmodel)
+				os.remove(saveDir+'/'+_newmodel)
 			
 			net.train()

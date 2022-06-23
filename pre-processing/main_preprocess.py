@@ -185,9 +185,9 @@ def createTrainTestFile(dataFolder, raw_data, dataRatio):
     for d in range(len(raw_data)):
         if(count == dataRatio[0]+dataRatio[1]): count = 0
         if(count < dataRatio[0]):
-            towrite.append("Train,"+raw_data[d][:-4])
+            towrite.append("Train,"+raw_data[d])
         else:
-            towrite.append("Test,"+raw_data[d][:-4])
+            towrite.append("Test,"+raw_data[d])
         count += 1
 
     out = open(os.path.join(modelFolder,outFileTxt), 'w')
@@ -320,15 +320,19 @@ if __name__=="__main__":
     raw_data = os.listdir(processDir)
 
     print(len(raw_data))
-
+    processed_data = []
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
         if('lazy' in file): continue
         pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
         if(os.path.isdir(pathCheck)): continue
         preprocess(processDir,file,10,saveImg)
+        processed_data.append(file)
     
-    createTrainTestFile(dataFolder,raw_data,dataRatio)
+    createTrainTestFile(dataFolder,processed_data,dataRatio)
+
+
+
     # d = {0:'x', 1:'y', 2:'z'}
     # pointsdf = pd.DataFrame(all_points)
     # pointsdf.rename(columns = d, inplace=True)
