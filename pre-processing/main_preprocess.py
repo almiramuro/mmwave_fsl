@@ -339,16 +339,16 @@ if __name__=="__main__":
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
         # if('lazy' in file): continue
-        # if(saveData == True):
-        #     pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
-        #     if(os.path.isdir(pathCheck)): continue
+        if(saveData == True):
+            pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
+            if(os.path.isdir(pathCheck)): continue
         print('preprocessing %s with contents: '%file)
         # seePickle(os.path.join(processDir,file))
         preprocess(processDir,file,10, saveData, saveImg)
         processed_data.append(file)
         
     
-    createTrainTestFile(dataFolder,processed_data,dataRatio)
+    createTrainTestFile(dataFolder,raw_data,dataRatio)
 
 
 

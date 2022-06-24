@@ -83,7 +83,7 @@ if __name__=="__main__":
 				running_loss=0
 
 		if((epoch+1)%5==0 and epoch > 0):
-			_newmodel = 'model-'+str(epoch)+'.pth'
+			_newmodel = 'complete-model-'+str(epoch)+'.pth'
 			
 			m=nn.Softmax(dim=1)
 			predictions=[]
