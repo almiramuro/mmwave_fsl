@@ -57,7 +57,10 @@ def getLabel(inFile,nonManual=None,classes=None,withCount=False,includeMan=False
 		if wordOnly:
 			# This is what we care about
 			try:
-				return [k for k,v in enumerate(classes) if v in inFile][0] 
+				#user_gloss_rep
+				inFile.replace('\\','/')
+				gloss = '_'.join(inFile.split('/')[-1].split('_')[1:-1])
+				return classes.index(gloss)
 			except:
 				return None
 
@@ -115,9 +118,9 @@ class multiViewDatasetConcat(Dataset):
 		inDirs=[inDir.replace('\\','/') for inDir in inDirs]
 		# print(inDirs)
 		inDirs=[inDir for inDir in inDirs if(inDir.split('/')[-1] in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow)]
-		# print(inDirs)
-		self.data,self.labels,self.inFiles=self.loadData(inDirs)
 		
+		self.data,self.labels,self.inFiles=self.loadData(inDirs)
+
 		self.unique_labels=getDedup(copy.deepcopy(self.labels))			# creates a new object and recursively adds the copies of nested objects present in the original elements.
 		
 		print([classes[label]  for label in self.unique_labels])	

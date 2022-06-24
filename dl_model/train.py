@@ -106,6 +106,7 @@ if __name__=="__main__":
 			if(leadingAccuracy == 0):
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
+				torch.save(net.state_dict(),saveDir+_newmodel)
 				continue
 
 			if(accuracy >= leadingAccuracy):
