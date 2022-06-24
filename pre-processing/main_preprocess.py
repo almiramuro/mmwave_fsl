@@ -7,6 +7,7 @@ import os
 import sys
 from saveFigure import saveFig
 from lib.plot import *
+from test_utilities.unpickle import seePickle
 """
     Outlier removal (cluster) -> Aggregate frames (delay) -> Cluster (cluster)
 
@@ -111,21 +112,31 @@ def decay(raw, k,f):
             agg = dictionary with frame number (int) as key and xyz points (2d (n x 3) np array) as value 
     """    
     fcount = [i for i in range(1, f + 1)]
-    pts_perframe = int(k/f)
-    # print('f: {} k: {} k/f: {}'.format(f,k,pts_perframe))
     agg = {frame: np.zeros((0,3)) for frame in fcount}
     
     start = 0
     frame = 1
+    pts_perframe = int(k/f) if(k/f > 1) else 1
     
+    # print(fcount,pts_perframe)
+    # print(agg)
+
     for key, pts in raw.items():  
         for pt in pts:
             agg[frame] = np.vstack((agg[frame], pt))
             if(len(agg[frame]) == pts_perframe and frame < f): 
                 frame += 1
             elif(len(agg[frame]) == pts_perframe and frame == f):
-                # print('final frame count: {}'.format(frame))
                 return agg
+        # print('numframes: %d'%frame)
+        # print('\nupdated: ',agg)
+    
+    # check if all arrays have laman
+    for i in fcount:
+        if(agg[i].shape[0] == 0):
+            agg[i] = np.vstack((agg[i], np.zeros((1,3))))
+
+    return agg
 
 
 def createMultiview(_3dframe):
@@ -161,21 +172,24 @@ def npySave(view, data, dataSaveDir=None, imgSaveDir=None):
     outData = []
     count = 1
 
+    print('data has length of: %d'%len(data))
     for frame in data:
         if(imgSaveDir != None):
-            saveFig(frame,axis=view,pltTitle='Frame-'+str(count), saveDir=imgSaveDir, reSize = True)
+            imgSaveDir.replace('\\','/')
+            viewDir = os.path.join(imgSaveDir,view)
+            os.makedirs(viewDir, exist_ok=True)
+            saveFig(frame,axis=view,pltTitle='Frame-'+str(count), saveDir=viewDir, reSize = True)
         outData.append(saveFig(frame, axis=view, reSize = True, saveNumpy = True))
         count += 1
     if(dataSaveDir != None):
         np.save(dataSaveDir+'/'+view+'.npy', np.array(outData))
-
+    # print(outData)
     return np.array(outData)
 
 def createTrainTestFile(dataFolder, raw_data, dataRatio):
     modelFolder = os.path.join('..','dl_model')
-    cue = '_'.join([dataFolder.split('_')[i] for i in range(2)])
 
-    outFileTxt = cue+'_train_test_all_glosses'
+    outFileTxt = dataFolder+'_train_test_all_glosses'
     
     towrite = []
 
@@ -219,10 +233,10 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
         c += len(pts)
         pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
         pm_contents[key] = normalize(pts)
-    
-    for key, pts in pm_contents.items():
-        all_points = np.vstack((all_points, pts[:,:3]))
-    
+    print('orig # of pts: %d || new # of pts: %d'%(c,len(pm_contents.items())))
+    # print('pm_contents: ')
+    # print(pm_contents)
+
     # Aggregate Frames
     aggframes = decay(pm_contents, c, f)
 
@@ -230,14 +244,19 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
 
     clustFrames = []                        # array to contain dictionaries
     for _, xyz in aggframes.items():        # iterated len(aggframes) times which is num of frames
+        if(c < 10):
+            clustFrames.append(dict({0:xyz}))
+            continue
         clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
-        for key, pts in clust.items():
-            all_points = np.vstack((all_points, pts[:,:3]))
+        # print(clust)
         if(len(clust) == 0): continue
         clustFrames.append(clust)
-    
-    if(len(clustFrames) != 20): print(len(clustFrames)) 
-    
+
+    while(len(clustFrames) < 10):
+        clustFrames.append(dict({0:np.zeros((1,3))}))
+
+    if(len(clustFrames) != 10): print('frames not 10 but %d'%len(clustFrames)) 
+    # print(clustFrames)
 
     # Output handling 
     """
@@ -249,12 +268,16 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
     """
     data = {'xy': [], 'yz': [], 'xz': []} 
     for _3dframe in clustFrames:
+        # print("------------>3D FRAME: ",_3dframe)
         xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
+        print('len per framee: %d'%len(_3dframe.items()))
         if(len(xyf.values()) == 0): continue
         data['xy'].append(np.concatenate(list(xyf.values())))
         data['yz'].append(np.concatenate(list(yzf.values())))
         data['xz'].append(np.concatenate(list(xzf.values())))
 
+    # print('data: ', data)
+    # return
     dataDir = processDir.split('/')[1]                          #dirPath (data)
     
     outPath = 'preprocessed_data'    
@@ -263,7 +286,7 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
     outFolder = processDir.split('/')[2]
     imgFolder = processDir.split('/')[2]
 
-    print(filename[:-4])
+    # print(filename[:-4])
 
     dataSaveDir = os.path.join('..',dataDir, outPath, outFolder , filename[:-4])            #(data/preprocessed_data/place/user_gloss_it)
     imgSaveDir = os.path.join('..',dataDir, imgPath, imgFolder, filename[:-4])              #(data/images/place/user_gloss_it)
@@ -296,7 +319,7 @@ if __name__=="__main__":
             - the folder to process is outdoor_24_signs_15_reps 
             - use a 80:20 ratio for train and test files
     """
-    saveData = False
+    saveData = True
     saveImg = input("Enter Y to save preprocessed images: ")
     saveImg = True if(saveImg.upper()=="Y") else False
 
@@ -309,16 +332,21 @@ if __name__=="__main__":
     processDir = os.path.join(dataDir,dataFolder)
     raw_data = os.listdir(processDir)
 
-    print(len(raw_data))
+    print('processDir: %s'%(processDir))
+
+    # print(len(raw_data))
     processed_data = []
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
-        if('lazy' in file): continue
-        if(saveData == True):
-            pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
-            if(os.path.isdir(pathCheck)): continue
+        # if('lazy' in file): continue
+        # if(saveData == True):
+        #     pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
+        #     if(os.path.isdir(pathCheck)): continue
+        print('preprocessing %s with contents: '%file)
+        # seePickle(os.path.join(processDir,file))
         preprocess(processDir,file,10, saveData, saveImg)
         processed_data.append(file)
+        
     
     createTrainTestFile(dataFolder,processed_data,dataRatio)
 

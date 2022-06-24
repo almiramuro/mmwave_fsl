@@ -158,11 +158,11 @@ def saveFig(x, axis = None, pltTitle = None, saveDir = '.', reSize = True, saveN
 			return np.asarray(im)
 		# print(saveDir)
 		# exit()
-		im.save(saveDir+'/'+pltTitle+'.png')
+		im.save(os.path.join(saveDir,pltTitle+'.png'))
 		ram.close()
 		plt.close()
 	else:
-		plt.savefig(saveDir+'/'+pltTitle+'.jpeg')
+		plt.savefig(os.path.join(saveDir,pltTitle+'.jpeg'))
 		plt.close()
 	
 

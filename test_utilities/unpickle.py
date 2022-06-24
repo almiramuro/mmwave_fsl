@@ -3,13 +3,20 @@ import numpy as np
 from matplotlib import pyplot as plt
 from math import log10
 import matplotlib.animation
+import sys
 
 
-filename = '..\\feellazy\\indoor\\alma_reel_lazy_10.pkl'
-with open(filename, 'rb') as handle:
-    data = pickle.load(handle)
-print(filename)
-print(data)
+def seePickle(file):
+    print("pickle file %s has data: "%file)
+    with open(file, 'rb') as handle:
+        data = pickle.load(handle)
+    print(data)
+
+
+if __name__ == "__main__":
+    filepath = sys.argv[1]
+
+    seePickle(filepath)
 
 # t = list(data.keys())
 
