@@ -84,8 +84,6 @@ if __name__=="__main__":
 
 		if((epoch+1)%5==0 and epoch > 0):
 			_newmodel = 'model-'+str(epoch)+'.pth'
-
-			torch.save(net.state_dict(),saveDir+_newmodel)
 			
 			m=nn.Softmax(dim=1)
 			predictions=[]
@@ -112,7 +110,6 @@ if __name__=="__main__":
 
 			if(accuracy >= leadingAccuracy):
 				os.remove(saveDir+leadingModel)
+				torch.save(net.state_dict(),saveDir+_newmodel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
-			elif(accuracy < leadingAccuracy):
-				os.remove(saveDir+_newmodel)
