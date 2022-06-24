@@ -101,7 +101,6 @@ if __name__=="__main__":
 				count += 1
 
 			confusion,accuracy=computeAccuracy(labels,predictions,[i for i in range(len(classes))])
-			print("The accuracy for %s using %s is: %f"%(testFilePath,_newmodel,accuracy))
 			
 			if(leadingAccuracy == 0):
 				leadingModel = _newmodel
@@ -114,3 +113,5 @@ if __name__=="__main__":
 				torch.save(net.state_dict(),saveDir+_newmodel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
+    
+			print("The accuracy for %s using %s is: %f\nThe leading accuracy is %f"%(testFilePath,_newmodel,accuracy, leadingAccuracy))
