@@ -234,8 +234,6 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
         pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
         pm_contents[key] = normalize(pts)
     print('orig # of pts: %d || new # of pts: %d'%(c,len(pm_contents.items())))
-    # print('pm_contents: ')
-    # print(pm_contents)
 
     # Aggregate Frames
     aggframes = decay(pm_contents, c, f)
@@ -338,21 +336,13 @@ if __name__=="__main__":
     processed_data = []
     for file in raw_data:
         if(file[-4:] != '.pkl'): continue
-        # if('lazy' in file): continue
         if(saveData == True):
             pathCheck = os.path.join(dataDir.replace('/','\\'),'preprocessed_data',dataFolder,file[:-4])
             if(os.path.isdir(pathCheck)): continue
+
         print('preprocessing %s with contents: '%file)
-        # seePickle(os.path.join(processDir,file))
         preprocess(processDir,file,10, saveData, saveImg)
         processed_data.append(file)
         
     
     createTrainTestFile(dataFolder,raw_data,dataRatio)
-
-
-
-    # d = {0:'x', 1:'y', 2:'z'}
-    # pointsdf = pd.DataFrame(all_points)
-    # pointsdf.rename(columns = d, inplace=True)
-    # pointsdf.to_csv('all_points.csv')
