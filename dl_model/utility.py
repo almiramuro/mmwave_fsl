@@ -76,23 +76,22 @@ class multiViewDatasetConcat(Dataset):
 
 	"""
 	# trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
-	def __init__(self,dirPath,classes,filePath,nonManual=None,train=True,frameCount=60,logger=None,shuffle=False,wordOnly=False):
+	def __init__(self,dirPath,classes,filePath,combined=False,train=True,frameCount=60,wordOnly=True):
 		
 		#Defining attributes
 
 		self.dirPath=dirPath		# '../data/preprocessed_data'
-		self.classes=classes		# ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
+		self.classes=classes		# glosses
 		self.fileList=[]			# filenames list
 		self.trainOnly=train
 		self.data=None				# be filled through self.loadData(inDirs)
 		self.labels=[]				# be filled through self.loadData(inDirs)
 		self.frameCount=frameCount
+		self.setups = ['indoor','indoor_wnoise','outdoor']
 		self.views=['xy','yz','xz']
-		self.bodyParts=['body','left','right']
-		self.logger=logger
+		self.combined = combined
 		
 		# self.nonManual=nonManual
-		self.shuffle=shuffle			# False
 		self.wordOnly=wordOnly			# True
 
 		#Fetching Data
@@ -105,18 +104,30 @@ class multiViewDatasetConcat(Dataset):
 			f=[f.strip().split(',')[1].strip()[:-4] for f in f if 'Train' in f]
 		else:
 			f=[f.strip().split(',')[1].strip()[:-4] for f in f if 'Test' in f]
-		
-		
+				
 		self.fileList=f								# filenames list
 		# print(self.fileList)
 		self.fileListLow=[f.lower() for f in f]		# lowercase everything
-
-		inDirs=glob.glob(dirPath+'/*')				# list containing the folder names in the format <user_gloss_it>
+		if(self.combined):
+			# check folders
+			sFolder=glob.glob(dirPath+'/*')
+			sFolder=[folder.replace('\\','/') for folder in sFolder]
+			sFolder=[folder for folder in sFolder if(folder.split('/')[-1] in self.setups)]
+			# check data inside folders
+			inDirs = []
+			for folder in sFolder:
+				dirs = glob.glob(folder+'/*')
+				dirs=[inDir.replace('\\','/') for inDir in dirs]
+				dirs=[inDir for inDir in dirs if('/'.join(inDir.split('/')[-2:]) in self.fileList)]
+				inDirs += dirs	# put indirs
+						
+		else:
+			inDirs=glob.glob(dirPath+'/*')				# list containing the folder names in the format <user_gloss_it>
 		
-		# get the files in the Directory that are in the fileList
-		inDirs=[inDir.replace('\\','/') for inDir in inDirs]
-		# print(inDirs)
-		inDirs=[inDir for inDir in inDirs if(inDir.split('/')[-1] in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow)]
+			# get the files in the Directory that are in the fileList
+			inDirs=[inDir.replace('\\','/') for inDir in inDirs]
+			# print(inDirs)
+			inDirs=[inDir for inDir in inDirs if(inDir.split('/')[-1] in self.fileList or getLower(inDir.split('/')[-1]) in self.fileListLow)]
 		
 		self.data,self.labels,self.inFiles=self.loadData(inDirs)
 
@@ -137,16 +148,8 @@ class multiViewDatasetConcat(Dataset):
 		return len(self.labels)
 		
 	def __getitem__(self,idx):
-		if self.wordOnly:
-			# tuple(tensor for data, tensor for label)
-			return torch.tensor(self.data[idx],dtype=torch.float32),torch.tensor(self.labels[idx],dtype=torch.long)
-		# if self.trainOnly:
-		# 	return torch.tensor(self.data[idx],dtype=torch.float32),torch.tensor(self.labels[idx],dtype=torch.long),\
-		# 	torch.tensor(self.tgtLen[idx],dtype=torch.long)
-		# else:
-		# 	return torch.tensor(self.data[idx],dtype=torch.float32),torch.tensor(self.labels[idx],dtype=torch.long),\
-		# 	torch.tensor(self.tgtLen[idx],dtype=torch.long),self.inFiles[idx]
-
+		return torch.tensor(self.data[idx],dtype=torch.float32),torch.tensor(self.labels[idx],dtype=torch.long)
+		
 	def loadData(self,inDirs):
 		data={'xy':[],'yz':[],'xz':[]}
 		labels=[]

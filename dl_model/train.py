@@ -27,9 +27,14 @@ if __name__=="__main__":
 		to use the filePath outdoor_test_all_glosses for testing
 
     """
+	preDirPath = '../data/preprocessed_data/'
 	# Text files containing the train and test
-	trainFilePath = '_'.join([sys.argv[1].split('-')[1],'train_test_all_glosses'])		#outdoor_24_luishome
-	testFilePath = '_'.join([sys.argv[2].split('-')[1], 'train_test_all_glosses'])		#outdoor_24_luishome
+	
+	trainset = sys.argv[1].split('-')[1]
+	testset = sys.argv[2].split('-')[1]
+
+	trainFilePath = '_'.join([trainset,'train_test_all_glosses'])		#outdoor_24_luishome
+	testFilePath = '_'.join([testset, 'train_test_all_glosses'])		#outdoor_24_luishome
 	
 	classes = open('glosses','r',encoding='utf-8-sig').readlines()
 	classes = [ gloss.strip() for gloss in classes ]
@@ -44,13 +49,12 @@ if __name__=="__main__":
 
 
 	# Directory path containing the files
-	trainDirPath = '../data/preprocessed_data/'+ trainFilePath.removesuffix('_train_test_all_glosses')
-	testDirPath = '../data/preprocessed_data/'+ testFilePath.removesuffix('_train_test_all_glosses')
-
+	trainDirPath = preDirPath if(trainset=='combined') else preDirPath + trainFilePath.removesuffix('_train_test_all_glosses') 
+	testDirPath = preDirPath if(trainset=='combined') else preDirPath + testFilePath.removesuffix('_train_test_all_glosses')
 	print(trainDirPath,testDirPath)
 
-	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,train=True,frameCount=10,wordOnly=True)
-	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,train=False,frameCount=10,wordOnly=True)
+	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,combined=True, train=True,frameCount=10,wordOnly=True)
+	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,combined=True, train=False,frameCount=10,wordOnly=True)
 
 	torch.manual_seed(1)
 	torch.cuda.manual_seed(1)
