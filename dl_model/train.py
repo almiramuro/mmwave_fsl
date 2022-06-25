@@ -69,6 +69,7 @@ if __name__=="__main__":
 	testDataLoader=DataLoader(testDataset,5,shuffle=False)
 	criterion=nn.CrossEntropyLoss()
 	leadingAccuracy = 0
+	outAccs = []
 	for epoch in range(400):
 		net.train()
 		running_loss=0
@@ -86,7 +87,7 @@ if __name__=="__main__":
 				batchCount=0
 				running_loss=0
 
-		if((epoch+1)%5==0 and epoch > 0):
+		if(epoch >= 300):
 			_newmodel = 'complete-model-'+str(epoch)+'.pth'
 			
 			m=nn.Softmax(dim=1)
@@ -117,5 +118,10 @@ if __name__=="__main__":
 				torch.save(net.state_dict(),saveDir+_newmodel)
 				leadingModel = _newmodel
 				leadingAccuracy = accuracy
-    
+			
+			outAccs.append('Model: %s	| Accuracy: %f'%(_newmodel,accuracy))
 			print("The accuracy for %s using %s is: %f\nThe leading accuracy is %f"%(testFilePath,_newmodel,accuracy, leadingAccuracy))
+	
+	accuracytxt = open(saveDir+'accuracy_list','w')
+	accuracytxt.writelines('\n'.join(accuracytxt))
+	accuracytxt.close()
