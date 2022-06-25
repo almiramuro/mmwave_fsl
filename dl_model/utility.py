@@ -7,7 +7,6 @@ import torch
 import logging 
 from sklearn.metrics import accuracy_score,confusion_matrix, ConfusionMatrixDisplay
 import itertools
-from asr_evaluation import __main__
 import os
 import copy
 from subprocess import PIPE, run
