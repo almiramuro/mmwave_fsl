@@ -6,6 +6,12 @@ import platform
 import serial.tools.list_ports
 import time
 import pickle
+import numpy as np
+
+import torch.nn as nn
+import torch
+from dl_model.model import wordNet
+from pre_processing.main_preprocess import cluster, normalize, decay, createMultiview, saveFig
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -29,6 +35,10 @@ DEFAULT_CONFIG_FILE = '1443config.cfg'
 # Mac
 DEFAULT_CLI_PORT = '/dev/cu.usbmodemR10310411'
 DEFAULT_DATA_PORT = '/dev/cu.usbmodemR10310414'
+
+# Define labels
+CLASSES = open('dl_model/glosses','r',encoding='utf-8-sig').readlines()
+CLASSES = [ gloss.strip() for gloss in CLASSES ]
 
 class Stream(QObject):
     '''For outputting terminal in GUI'''
@@ -160,9 +170,18 @@ class App(QDialog):
         leftLayout.addWidget(self.terminalGroupBox)
         leftLayout.addWidget(self.recordGroupBox)
 
-        # QVBoxLayout for plot and plot settings
+        # QVBoxLayouts for right side layouts
         rightLayout = QVBoxLayout()
+        plotLayout = QVBoxLayout()
+        modelLayout = QVBoxLayout()
         
+        # QTabWidget for spltting data collection and model 
+        tabWidget = QTabWidget()
+        plotWidget = QWidget()
+        modelWidget = QWidget()
+        tabWidget.addTab(plotWidget, 'Plot')
+        tabWidget.addTab(modelWidget, 'Model')
+
         # Plot
         self.plotGroupBox = QGroupBox('Plot')
         self.createPlotGroupBox()
@@ -171,8 +190,19 @@ class App(QDialog):
         self.plotSettingsGroupBox = QGroupBox('Plot Settings')
         self.createPlotSettingsGroupBox()
 
-        rightLayout.addWidget(self.plotGroupBox)
-        rightLayout.addWidget(self.plotSettingsGroupBox)
+        # Model settings
+        self.modelSettingsGroupBox = QGroupBox('Load Model')
+        self.createModelSettings()
+
+        # Putting right layout together
+        plotLayout.addWidget(self.plotGroupBox)
+        plotLayout.addWidget(self.plotSettingsGroupBox)
+        plotWidget.setLayout(plotLayout)
+
+        modelLayout.addWidget(self.modelSettingsGroupBox)
+        modelWidget.setLayout(modelLayout)
+
+        rightLayout.addWidget(tabWidget)
 
         # Putting it together
         horizontalLayout.addLayout(leftLayout)
@@ -440,15 +470,165 @@ class App(QDialog):
 
     # ----- END OF PLOT SETTINGS PART -----
 
+    # ----- MODEL SETTINGS PART -----
+
+    def createModelSettings(self):
+        '''
+        Widgets needed:
+        - .pth file selection
+        - cuda or cpu select
+        - ? input file (can be set to mirror record filename)
+        - display gloss
+        '''
+        modelSettingsVBox = QVBoxLayout()
+
+        # Model file select row
+        pthFileHBox = QHBoxLayout()
+        self.pthFileButton = QPushButton(text="Select pre-trained model")
+        self.pthFileButton.clicked.connect(self.getPthFile)
+        self.pthFileLabel = QLabel(text='.pth Filename', alignment=Qt.AlignCenter)
+
+        pthFileHBox.addWidget(self.pthFileButton)
+        pthFileHBox.addWidget(self.pthFileLabel)
+
+        # Load model button
+        self.loadModelButton = QPushButton('Load Model')
+        self.loadModelButton.clicked.connect(self.loadModel)
+
+        #Toggle button for activating realtime
+        self.realtimeButton = QPushButton('Real-time Infer')
+        self.realtimeButton.setCheckable(True)
+        self.realtimeButton.clicked[bool].connect(self.realtimeInfer)
+        self.realtimeButton.setEnabled(False)
+
+        #Pkl File select for non-realtime
+        modelPklFileHBox = QHBoxLayout()
+        self.modelPklFileButton = QPushButton(text="Select pkl file to infer")
+        self.modelPklFileButton.clicked.connect(self.getModelPklFile)
+        self.modelPklFileButton.setEnabled(False)
+        self.modelPklFileLabel = QLabel(text='.pkl Filename', alignment=Qt.AlignCenter)
+
+        modelPklFileHBox.addWidget(self.modelPklFileButton)
+        modelPklFileHBox.addWidget(self.modelPklFileLabel)
+
+        self.manualInferButton = QPushButton('Manual Infer')
+        self.manualInferButton.clicked.connect(self.infer)
+        self.manualInferButton.setEnabled(False)
+
+        self.glossLabel = QLabel(text='Translation here', alignment=Qt.AlignCenter)
+        
+        modelSettingsVBox.addLayout(pthFileHBox)
+        modelSettingsVBox.addWidget(self.loadModelButton)
+        modelSettingsVBox.addWidget(self.realtimeButton)
+        modelSettingsVBox.addLayout(modelPklFileHBox)
+        modelSettingsVBox.addWidget(self.manualInferButton)
+        modelSettingsVBox.addWidget(self.glossLabel)
+        self.modelSettingsGroupBox.setLayout(modelSettingsVBox)
+
+    def getPthFile(self):
+        self.pthFileName, _ = QFileDialog.getOpenFileName(self, 'Select model file', './dl_model/checkpoints/', 'Pth Files (*.pth)')
+        if self.pthFileName == '':
+            self.pthFileLabel.setText('No .pth File Selected')
+            print('[MODEL CONFIG] Please select a model file')
+        else:
+            self.pthFileLabel.setText(self.pthFileName)
+            print("[MODEL CONFIG] '{}' selected as .pth file".format(self.pthFileName))
+            # initialize model buttons here
+
+    def loadModel(self):
+        try:
+            torch.manual_seed(1)
+            torch.cuda.manual_seed(1)
+            np.random.seed(1)
+            torch.backends.cudnn.deterministic = True
+
+            self.net = wordNet(2048, class_size=len(CLASSES), num_layers=2, batch_size=5, dropout=0.65, use_cuda=False, frameCount=10, dataParallel=True)
+            self.net.load_state_dict(torch.load(self.pthFileLabel.text(), map_location='cpu'), strict=False)
+            self.m = nn.Softmax(dim=1)
+            self.net.eval()
+
+            print("[MODEL CONFIG] '{}' model loaded".format(self.pthFileLabel.text().split('/')[-1]))
+
+            # Activate model buttons
+            self.realtimeButton.setEnabled(True)
+            self.modelPklFileButton.setEnabled(True)
+            self.manualInferButton.setEnabled(True)
+        except:
+            print("[MODEL CONFIG] Failed to load selected model")
+
+    def realtimeInfer(self, pressed):
+        pass
+
+    def getModelPklFile(self):
+        self.modelPklFileName, _ = QFileDialog.getOpenFileName(self, 'Open PKL File', './data/', 'PKL Files (*.pkl)')
+        if self.modelPklFileName == '':
+            print('[MODEL CONFIG] No pkl file selected')
+            return
+        self.modelPklFileLabel.setText(self.modelPklFileName)
+
+    def infer(self):
+        print('infering', self.modelPklFileLabel.text())
+        with open(self.modelPklFileLabel.text(), "rb") as pm_data:
+            pm_contents = pickle.load(pm_data, encoding="bytes")
+
+        f = 10 #number of frames
+
+        #Outlier Removal and Translation
+        c = 0
+        for key, pts in pm_contents.items():
+            c += len(pts)
+            pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
+            pm_contents[key] = normalize(pts)
+
+        # Aggregate Frames
+        aggframes = decay(pm_contents, c, f)
+
+
+        # Cluster
+        clustFrames = []                        # array to contain dictionaries
+        for _, xyz in aggframes.items():        # iterated len(aggframes) times which is num of frames
+            if(c < 10):
+                clustFrames.append(dict({0:xyz}))
+                continue
+            clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
+            if(len(clust) == 0): continue
+            clustFrames.append(clust)
+
+        while(len(clustFrames) < 10):
+            clustFrames.append(dict({0:np.zeros((1,3))}))
+
+        # Multiview
+        data = {'xy': [], 'yz': [], 'xz': []} 
+        for _3dframe in clustFrames:
+            xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
+            if(len(xyf.values()) == 0): continue
+            data['xy'].append(np.concatenate(list(xyf.values())))
+            data['yz'].append(np.concatenate(list(yzf.values())))
+            data['xz'].append(np.concatenate(list(xzf.values())))
+
+        outData = {'xy': [], 'yz': [], 'xz': []}
+        for view in data.keys():
+            for frame in data[view]:
+                outData[view].append(saveFig(frame, axis=view, reSize=True, saveNumpy=True))
+            
+        data = [np.concatenate((outData['xy'], outData['yz'], outData['xz']), axis=0)]
+        # print(data)
+        preprocessed = torch.tensor(data, dtype=torch.float32)
+
+        # model predict
+        o = self.net(preprocessed, 10)
+        prediction = torch.max(self.m(o), dim=1)[1].cpu().numpy().tolist()
+        print(prediction)
+        # self.glossLabel.setText(CLASSES[prediction[0]])
+
+    # ----- END OF MODEL SETTINGS PART -----
+
     def center(self):
         """centers the window on the screen"""
         screen = QDesktopWidget().screenGeometry()
         size = self.geometry()
         self.move((screen.width() - size.width()) // 2,
                   (screen.height() - size.height()) // 2)
-
-
-    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
