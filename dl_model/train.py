@@ -121,7 +121,6 @@ if __name__=="__main__":
 			
 			outAccs.append('Model: %s	| Accuracy: %f'%(_newmodel,accuracy))
 			print("The accuracy for %s using %s is: %f\nThe leading accuracy is %f"%(testFilePath,_newmodel,accuracy, leadingAccuracy))
-	
 	accuracytxt = open(saveDir+'accuracy_list','w')
-	accuracytxt.writelines('\n'.join(accuracytxt))
+	accuracytxt.writelines('\n'.join(outAccs))
 	accuracytxt.close()
