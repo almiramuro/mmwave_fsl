@@ -7,6 +7,11 @@ import serial.tools.list_ports
 import time
 import pickle
 
+import torch.nn as nn
+import torch
+from dl_model.model import wordNet
+from pre_processing.main_preprocess import cluster, drop_duplicates, normalize, decay, createMultiview
+
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui
@@ -29,6 +34,10 @@ DEFAULT_CONFIG_FILE = '1443config.cfg'
 # Mac
 DEFAULT_CLI_PORT = '/dev/cu.usbmodemR10310411'
 DEFAULT_DATA_PORT = '/dev/cu.usbmodemR10310414'
+
+# Define labels
+CLASSES = open('dl_model/glosses','r',encoding='utf-8-sig').readlines()
+CLASSES = [ gloss.strip() for gloss in CLASSES ]
 
 class Stream(QObject):
     '''For outputting terminal in GUI'''
@@ -481,22 +490,32 @@ class App(QDialog):
         pthFileHBox.addWidget(self.pthFileButton)
         pthFileHBox.addWidget(self.pthFileLabel)
 
+        # Load model button
+        self.loadModelButton = QPushButton('Load Model')
+        self.loadModelButton.clicked.connect(self.loadModel)
+
         #Toggle button for activating realtime
         self.realtimeButton = QPushButton('Real-time Infer')
         self.realtimeButton.setCheckable(True)
         self.realtimeButton.clicked[bool].connect(self.realtimeInfer)
+        self.realtimeButton.setEnabled(False)
 
         #Pkl File select for non-realtime
         modelPklFileHBox = QHBoxLayout()
         self.modelPklFileButton = QPushButton(text="Select pkl file to infer")
         self.modelPklFileButton.clicked.connect(self.getModelPklFile)
+        self.modelPklFileButton.setEnabled(False)
         self.modelPklFileLabel = QLabel(text='.pkl Filename', alignment=Qt.AlignCenter)
 
         modelPklFileHBox.addWidget(self.modelPklFileButton)
         modelPklFileHBox.addWidget(self.modelPklFileLabel)
-        
 
+        self.manualInferButton = QPushButton('Manual Infer')
+        self.manualInferButton.clicked.connect(self.infer)
+        self.manualInferButton.setEnabled(False)
+        
         modelSettingsVBox.addLayout(pthFileHBox)
+        modelSettingsVBox.addWidget(self.loadModelButton)
         modelSettingsVBox.addWidget(self.realtimeButton)
         modelSettingsVBox.addLayout(modelPklFileHBox)
         self.modelSettingsGroupBox.setLayout(modelSettingsVBox)
@@ -511,11 +530,35 @@ class App(QDialog):
             print("[MODEL CONFIG] '{}' selected as .pth file".format(self.pthFileName))
             # initialize model buttons here
 
+    def loadModel(self):
+        try:
+            self.net = wordNet(2048, class_size=len(CLASSES), num_layers=2, batch_size=1, dropout=0.65, use_cuda=False, frameCount=10, dataParallel=True)
+            self.net.load_state_dict(torch.load(self.pthFileLabel.text(), map_location='cpu'), strict=False)
+            self.net.eval()
+            print("[MODEL CONFIG] '{}' model loaded".format(self.pthFileLabel.text().split('/')[-1]))
+
+            # Activate model buttons
+            self.realtimeButton.setEnabled(True)
+            self.modelPklFileButton.setEnabled(True)
+            self.manualInferButton.setEnabled(True)
+        except:
+            print("[MODEL CONFIG] Failed to load selected model")
+
     def realtimeInfer(self, pressed):
         pass
 
     def getModelPklFile(self):
-        pass
+        self.modelPklFileName, _ = QFileDialog.getOpenFileName(self, 'Open PKL File', './data/', 'PKL Files (*.pkl)')
+        if self.modelPklFileName == '':
+            print('[MODEL CONFIG] No pkl file selected')
+            return
+        self.modelPklFileLabel.setText(self.modelPklFileName)
+
+    def infer(self):
+        with open(self.modelPklFileLabel.text(), "rb") as pm_data:
+            pm_contents = pickle.load(pm_data, encoding="bytes")
+        
+
 
     # ----- END OF MODEL SETTINGS PART -----
 
