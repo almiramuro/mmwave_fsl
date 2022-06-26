@@ -2,12 +2,13 @@
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 import pickle
-import pandas as pd
 import os
 import sys
-from saveFigure import saveFig
-from lib.plot import *
-from test_utilities.unpickle import seePickle
+from matplotlib.ticker import NullLocator
+from PIL import Image
+import io
+
+# from lib.plot import *
 """
     Outlier removal (cluster) -> Aggregate frames (delay) -> Cluster (cluster)
 
@@ -160,6 +161,58 @@ def createMultiview(_3dframe):
         xzframes[cluster] = np.array(xz)
 
     return xyframes,yzframes,xzframes
+
+def saveFig(x, axis = None, pltTitle = None, saveDir = '.', reSize = True, saveNumpy = False):
+	# saveFigure(x,pltTitle='Image-'+str(count),saveDir=saveDir+'/'+axis, axis=axis,saveNumpy=saveNumpy,reSize=True)
+	
+	#Change axis limits
+	fig=plt.figure()
+	ax=fig.add_subplot(111)
+	if(axis=='xy' or axis == None):
+		ax.set_xlabel('x')
+		ax.set_ylabel('y')
+		ax.set_xlim(-0.5, 0.8)
+		ax.set_ylim(-1.2, 0.6)
+	elif(axis == 'yz'):
+		ax.set_xlabel('y')
+		ax.set_ylabel('z')
+		ax.set_xlim(-1.2, 0.6)
+		ax.set_ylim(-1.4, 1.1)
+	elif(axis == 'xz'):
+		ax.set_xlabel('x')
+		ax.set_ylabel('z')
+		ax.set_xlim(-0.5, 0.8)
+		ax.set_ylim(-1.4, 1.1)
+
+	if x is None:
+		plt.clf()
+	else:
+		ax.scatter(x[:,0],x[:,1],c='red',marker='o')
+
+	ax.set_axis_off()
+	plt.margins(0,0)
+	ax.xaxis.set_major_locator(NullLocator())
+	ax.yaxis.set_major_locator(NullLocator())
+	plt.ioff()
+	plt.axis('off')
+	if reSize:
+		ram=io.BytesIO()
+		plt.savefig(ram,format='jpeg')
+		im=Image.open(ram)
+		# im=im.convert('1')
+		im=im.resize((100,74),Image.LANCZOS)	
+		if saveNumpy:
+			ram.close()
+			plt.close()
+			return np.asarray(im)
+		# print(saveDir)
+		# exit()
+		im.save(os.path.join(saveDir,pltTitle+'.png'))
+		ram.close()
+		plt.close()
+	else:
+		plt.savefig(os.path.join(saveDir,pltTitle+'.jpeg'))
+		plt.close()
 
 def npySave(view, data, dataSaveDir=None, imgSaveDir=None):
     """
