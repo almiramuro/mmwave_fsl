@@ -516,6 +516,7 @@ class App(QDialog):
         self.manualInferButton.setEnabled(False)
 
         self.glossLabel = QLabel(text='Translation here', alignment=Qt.AlignCenter)
+        self.glossLabel.setFont(QtGui.QFont('Helvetica', 32))
         
         modelSettingsVBox.addLayout(pthFileHBox)
         modelSettingsVBox.addWidget(self.loadModelButton)
@@ -618,8 +619,8 @@ class App(QDialog):
         # model predict
         o = self.net(preprocessed, 10)
         prediction = torch.max(self.m(o), dim=1)[1].cpu().numpy().tolist()
-        print(prediction)
-        # self.glossLabel.setText(CLASSES[prediction[0]])
+        print(CLASSES[prediction[0]])
+        self.glossLabel.setText(CLASSES[prediction[0]])
 
     # ----- END OF MODEL SETTINGS PART -----
 
