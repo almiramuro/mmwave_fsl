@@ -338,7 +338,11 @@ class App(QDialog):
                 self.loadPklFile()
                 self.rightAfterRecord = False
 
-
+            if self.realtimeButton.isChecked():
+                try:
+                    self.infer(data=self.reader.frameData)
+                except:
+                    print("[MODEL] Failed to recognize data")
 
         else:
             # Start sensor
@@ -517,6 +521,8 @@ class App(QDialog):
 
         self.glossLabel = QLabel(text='Translation here', alignment=Qt.AlignCenter)
         self.glossLabel.setFont(QtGui.QFont('Helvetica', 32))
+
+        self.timerLabel = QLabel(text='Latency', alignment=Qt.AlignCenter)
         
         modelSettingsVBox.addLayout(pthFileHBox)
         modelSettingsVBox.addWidget(self.loadModelButton)
@@ -524,6 +530,7 @@ class App(QDialog):
         modelSettingsVBox.addLayout(modelPklFileHBox)
         modelSettingsVBox.addWidget(self.manualInferButton)
         modelSettingsVBox.addWidget(self.glossLabel)
+        modelSettingsVBox.addWidget(self.timerLabel)
         self.modelSettingsGroupBox.setLayout(modelSettingsVBox)
 
     def getPthFile(self):
@@ -558,7 +565,12 @@ class App(QDialog):
             print("[MODEL CONFIG] Failed to load selected model")
 
     def realtimeInfer(self, pressed):
-        pass
+        if pressed:
+            self.modelPklFileButton.setEnabled(False)
+            self.manualInferButton.setEnabled(False)
+        else:
+            self.modelPklFileButton.setEnabled(True)
+            self.manualInferButton.setEnabled(True)
 
     def getModelPklFile(self):
         self.modelPklFileName, _ = QFileDialog.getOpenFileName(self, 'Open PKL File', './data/', 'PKL Files (*.pkl)')
@@ -567,10 +579,17 @@ class App(QDialog):
             return
         self.modelPklFileLabel.setText(self.modelPklFileName)
 
-    def infer(self):
-        print('infering', self.modelPklFileLabel.text())
-        with open(self.modelPklFileLabel.text(), "rb") as pm_data:
-            pm_contents = pickle.load(pm_data, encoding="bytes")
+    def infer(self, data=None):
+        time_start = time.time()
+
+        if data == None:
+            print('infering', self.modelPklFileLabel.text())
+            with open(self.modelPklFileLabel.text(), "rb") as pm_data:
+                pm_contents = pickle.load(pm_data, encoding="bytes")
+
+        else:
+            print('infering from recording')
+            pm_contents = data
 
         f = 10 #number of frames
 
@@ -621,6 +640,9 @@ class App(QDialog):
         prediction = torch.max(self.m(o), dim=1)[1].cpu().numpy().tolist()
         print(CLASSES[prediction[0]])
         self.glossLabel.setText(CLASSES[prediction[0]])
+
+        time_end = time.time() - time_start
+        self.timerLabel.setText(str(time_end))
 
     # ----- END OF MODEL SETTINGS PART -----
 
