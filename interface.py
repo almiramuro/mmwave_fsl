@@ -160,9 +160,18 @@ class App(QDialog):
         leftLayout.addWidget(self.terminalGroupBox)
         leftLayout.addWidget(self.recordGroupBox)
 
-        # QVBoxLayout for plot and plot settings
+        # QVBoxLayouts for right side layouts
         rightLayout = QVBoxLayout()
+        plotLayout = QVBoxLayout()
+        modelLayout = QVBoxLayout()
         
+        # QTabWidget for spltting data collection and model 
+        tabWidget = QTabWidget()
+        plotWidget = QWidget()
+        modelWidget = QWidget()
+        tabWidget.addTab(plotWidget, 'Plot')
+        tabWidget.addTab(modelWidget, 'Model')
+
         # Plot
         self.plotGroupBox = QGroupBox('Plot')
         self.createPlotGroupBox()
@@ -171,8 +180,19 @@ class App(QDialog):
         self.plotSettingsGroupBox = QGroupBox('Plot Settings')
         self.createPlotSettingsGroupBox()
 
-        rightLayout.addWidget(self.plotGroupBox)
-        rightLayout.addWidget(self.plotSettingsGroupBox)
+        # Model settings
+        self.modelSettingsGroupBox = QGroupBox('Load Model')
+        self.createModelSettings()
+
+        # Putting right layout together
+        plotLayout.addWidget(self.plotGroupBox)
+        plotLayout.addWidget(self.plotSettingsGroupBox)
+        plotWidget.setLayout(plotLayout)
+
+        modelLayout.addWidget(self.modelSettingsGroupBox)
+        modelWidget.setLayout(modelLayout)
+
+        rightLayout.addWidget(tabWidget)
 
         # Putting it together
         horizontalLayout.addLayout(leftLayout)
@@ -439,6 +459,65 @@ class App(QDialog):
         self.timestamps = list(self.data.keys())
 
     # ----- END OF PLOT SETTINGS PART -----
+
+    # ----- MODEL SETTINGS PART -----
+
+    def createModelSettings(self):
+        '''
+        Widgets needed:
+        - .pth file selection
+        - cuda or cpu select
+        - ? input file (can be set to mirror record filename)
+        - display gloss
+        '''
+        modelSettingsVBox = QVBoxLayout()
+
+        # Model file select row
+        pthFileHBox = QHBoxLayout()
+        self.pthFileButton = QPushButton(text="Select pre-trained model")
+        self.pthFileButton.clicked.connect(self.getPthFile)
+        self.pthFileLabel = QLabel(text='.pth Filename', alignment=Qt.AlignCenter)
+
+        pthFileHBox.addWidget(self.pthFileButton)
+        pthFileHBox.addWidget(self.pthFileLabel)
+
+        #Toggle button for activating realtime
+        self.realtimeButton = QPushButton('Real-time Infer')
+        self.realtimeButton.setCheckable(True)
+        self.realtimeButton.clicked[bool].connect(self.realtimeInfer)
+
+        #Pkl File select for non-realtime
+        modelPklFileHBox = QHBoxLayout()
+        self.modelPklFileButton = QPushButton(text="Select pkl file to infer")
+        self.modelPklFileButton.clicked.connect(self.getModelPklFile)
+        self.modelPklFileLabel = QLabel(text='.pkl Filename', alignment=Qt.AlignCenter)
+
+        modelPklFileHBox.addWidget(self.modelPklFileButton)
+        modelPklFileHBox.addWidget(self.modelPklFileLabel)
+        
+
+        modelSettingsVBox.addLayout(pthFileHBox)
+        modelSettingsVBox.addWidget(self.realtimeButton)
+        modelSettingsVBox.addLayout(modelPklFileHBox)
+        self.modelSettingsGroupBox.setLayout(modelSettingsVBox)
+
+    def getPthFile(self):
+        self.pthFileName, _ = QFileDialog.getOpenFileName(self, 'Select model file', './dl_model/checkpoints/', 'Pth Files (*.pth)')
+        if self.pthFileName == '':
+            self.pthFileLabel.setText('No .pth File Selected')
+            print('[MODEL CONFIG] Please select a model file')
+        else:
+            self.pthFileLabel.setText(self.pthFileName)
+            print("[MODEL CONFIG] '{}' selected as .pth file".format(self.pthFileName))
+            # initialize model buttons here
+
+    def realtimeInfer(self, pressed):
+        pass
+
+    def getModelPklFile(self):
+        pass
+
+    # ----- END OF MODEL SETTINGS PART -----
 
     def center(self):
         """centers the window on the screen"""
