@@ -53,8 +53,8 @@ if __name__=="__main__":
 	testDirPath = preDirPath if(trainset=='combined') else preDirPath + testFilePath.removesuffix('_train_test_all_glosses')
 	print(trainDirPath,testDirPath)
 
-	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,combined=True, train=True,frameCount=10,wordOnly=True)
-	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,combined=True, train=False,frameCount=10,wordOnly=True)
+	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,combined=(trainset=='combined'), train=True,frameCount=10,wordOnly=True)
+	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,combined=(trainset=='combined'), train=False,frameCount=10,wordOnly=True)
 
 	torch.manual_seed(1)
 	torch.cuda.manual_seed(1)

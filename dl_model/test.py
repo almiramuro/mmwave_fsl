@@ -31,10 +31,17 @@ if __name__=="__main__":
     classes = [ gloss.strip() for gloss in classes ]
     # _10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
 
-    filePath = setup + '_train_test_all_glosses'
-    dirPath = '../data/preprocessed_data/' + setup
+    # filePath = setup + '_train_test_all_glosses'
+    # dirPath = '../data/preprocessed_data/' + setup
 
-    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=False,frameCount=10,wordOnly=True)
+    filePath = '_'.join([setup,'train_test_all_glosses'])
+    dirPath = '../data/preprocessed_data/'
+    
+    dirPath = dirPath if(setup == 'combined') else dirPath + setup
+    
+    print(dirPath, filePath)
+
+    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=(setup=='combined'),train=False,frameCount=10,wordOnly=True)
 
     torch.manual_seed(1)
     torch.cuda.manual_seed(1)
