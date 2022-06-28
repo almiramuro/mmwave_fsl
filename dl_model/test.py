@@ -13,28 +13,30 @@ import matplotlib.pyplot as plt
 import os
 
 if __name__=="__main__":
-# """
-#     run the file: test.py datasetfolder modelpath
+    """
+        run the file: test.py datasetfolder modelpath
 
-#     e.g.
-#     Enter in cmd line:
-#         python test.py outdoor outdoor-to-outdoor/latest-model.pth
-#     to signify:
-#         - use the filePath: outdoor_train_test_all_glosses
-#         - use modelpath: outdoor-to-outdoor/latest-model.pth
+        e.g.
+        Enter in cmd line:
+            python test.py outdoor outdoor-to-outdoor/latest-model.pth
+        to signify:
+            - use the filePath: outdoor_train_test_all_glosses
+            - use modelpath: outdoor-to-outdoor/latest-model.pth
 
-# """
+    """
 
     setup, _model= sys.argv[1], sys.argv[2]
+    preDirPath = '../data/preprocessed_data/'
 
     classes = open('glosses','r',encoding='utf-8-sig').readlines()
     classes = [ gloss.strip() for gloss in classes ]
     # _10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
 
     filePath = setup + '_train_test_all_glosses'
-    dirPath = '../data/preprocessed_data/' + setup
-
-    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=False,frameCount=10,wordOnly=True)
+    dirPath = preDirPath if(setup=='combined') else preDirPath + setup
+    comb = True if(setup=='combined') else False
+    print(dirPath)
+    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=comb,train=False,frameCount=10,wordOnly=True)
 
     torch.manual_seed(1)
     torch.cuda.manual_seed(1)
