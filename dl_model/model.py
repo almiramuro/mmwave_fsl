@@ -8,7 +8,7 @@ class wordNet(nn.Module):
 		super(wordNet,self).__init__()
 		self.hidden_dim=hidden_dim		#2048
 		self.use_cuda=use_cuda			#True
-		self.class_size=class_size		#10 glosses
+		self.class_size=class_size		#glosses
 		self.num_layers=num_layers		#2
 		self.views=['xy','yz','xz']
 		self.modules={}
@@ -61,7 +61,8 @@ class wordNet(nn.Module):
 					nn.Linear(self.hidden_dim*2,self.hidden_dim),
 					nn.ReLU(),
 					nn.Linear(self.hidden_dim,1024),
-					nn.ReLU(),nn.Dropout(p=dropout),
+					nn.ReLU(),
+					nn.Dropout(p=dropout),
 					nn.Linear(1024,512),
 					nn.ReLU(),
 					nn.Linear(512,class_size)
@@ -84,6 +85,7 @@ class wordNet(nn.Module):
 
 		# Out
 		# i believe ito lang ung self.linear with expected numbers
+		# Dense Layer
 		self.linear_frame=self.localize(
 			nn.Sequential(
 				nn.Linear(self.hidden_dim,1024),
@@ -111,7 +113,6 @@ class wordNet(nn.Module):
 		self.batch=x.shape[0]		# len of the first dimension tensor (torch.Size([1stdimlen,2nddimlen,3rddimlen,4thdimlen]))
 		# Input Layer
 		self.t=t					# hmm what purpose?
-		bodyData={'body':None,'left':None,'right':None}
 		finalLayer=None
 		for i,view in enumerate(self.views):
 			# [(0, 'xy'), (1, 'yz'), (2, 'xz')]
@@ -142,7 +143,7 @@ class wordNet(nn.Module):
 		# x[...] is then a 2D tensor
 		# reshape to 2D sensor with # of rows = self.batch 
 		
-		# ready for linear layer
+		# ready for dense layer
 		o1=self.linear(o1)									# 
 		return o1	
 
