@@ -367,6 +367,7 @@ if __name__=="__main__":
             - the folder to process is outdoor_24_signs_15_reps 
             - use a 80:20 ratio for train and test files
     """
+    frameCount = 10
     saveData = True
     saveImg = input("Enter Y to save preprocessed images: ")
     saveImg = True if(saveImg.upper()=="Y") else False
@@ -391,7 +392,7 @@ if __name__=="__main__":
             if(os.path.isdir(pathCheck)): continue
 
         print('preprocessing %s with contents: '%file)
-        preprocess(processDir,file, 10, saveData, saveImg)
+        preprocess(processDir,file, frameCount, saveData, saveImg)
         processed_data.append(file)
         
     

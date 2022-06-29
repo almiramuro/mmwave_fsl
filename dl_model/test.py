@@ -11,6 +11,7 @@ import sys
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import os
+from pre_processing.main_preprocess import frameCount as frames 
 
 if __name__=="__main__":
     """
@@ -37,14 +38,14 @@ if __name__=="__main__":
     dirPath = dirPath if(setup == 'combined') else dirPath + setup
     comb = True if(setup=='combined') else False
     print(dirPath, filePath)
-    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=comb,train=False,frameCount=10,wordOnly=True)
+    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=comb,train=False,frameCount=frames,wordOnly=True)
 
     torch.manual_seed(1)
     torch.cuda.manual_seed(1)
     np.random.seed(1)
     torch.backends.cudnn.deterministic = True
 
-    net=wordNet(2048,len(classes),2,5,0.65,False,10,True)
+    net=wordNet(2048,len(classes),2,5,0.65,False,frames,True)
     modelPath='./checkpoints/'+_model
     net.load_state_dict(torch.load(modelPath,map_location='cpu'),strict=False)
     m=nn.Softmax(dim=1)
@@ -55,7 +56,7 @@ if __name__=="__main__":
     count = 0
     for x,label in multiViewDataLoader:
         print('sample ', count)		
-        o=net(x,10)	
+        o=net(x,frames)	
         prediction = torch.max(m(o),dim=1)[1].cpu().numpy().tolist()
         predictions += prediction
         labels+=label.cpu().numpy().tolist()
