@@ -391,7 +391,7 @@ if __name__=="__main__":
             if(os.path.isdir(pathCheck)): continue
 
         print('preprocessing %s with contents: '%file)
-        preprocess(processDir,file, 20, saveData, saveImg)
+        preprocess(processDir,file, 5, saveData, saveImg)
         processed_data.append(file)
         
     
