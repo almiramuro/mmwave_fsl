@@ -184,7 +184,7 @@ class App(QDialog):
 
         # Plot
         self.plotGroupBox = QGroupBox('Plot')
-        self.createPlotGroupBox()
+        # self.createPlotGroupBox()
 
         # Plot settings
         self.plotSettingsGroupBox = QGroupBox('Plot Settings')
@@ -340,6 +340,7 @@ class App(QDialog):
 
             if self.realtimeButton.isChecked():
                 try:
+                    time.sleep(1)
                     self.infer(data=self.reader.frameData)
                 except:
                     print("[MODEL] Failed to recognize data")
@@ -392,11 +393,11 @@ class App(QDialog):
 
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
+        # self.toolbar = NavigationToolbar(self.canvas, self)
         self.plotButton = QPushButton('Plot')
         self.plotButton.clicked.connect(self.plotData)
 
-        plotVBox.addWidget(self.toolbar)
+        # plotVBox.addWidget(self.toolbar)
         plotVBox.addWidget(self.canvas)
         plotVBox.addWidget(self.plotButton)
 
@@ -592,7 +593,7 @@ class App(QDialog):
             pm_contents = data
 
         f = 10 #number of frames
-
+        
         #Outlier Removal and Translation
         c = 0
         for key, pts in pm_contents.items():

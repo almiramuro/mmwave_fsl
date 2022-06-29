@@ -8,7 +8,7 @@ from matplotlib.ticker import NullLocator
 from PIL import Image
 import io
 
-# from lib.plot import *
+# from lib.plot import *s
 """
     Outlier removal (cluster) -> Aggregate frames (delay) -> Cluster (cluster)
 
@@ -136,7 +136,7 @@ def decay(raw, k,f):
     for i in fcount:
         if(agg[i].shape[0] == 0):
             agg[i] = np.vstack((agg[i], np.zeros((1,3))))
-
+    print("agg items: ",len(agg.items()))
     return agg
 
 
@@ -263,13 +263,7 @@ def createTrainTestFile(dataFolder, raw_data, dataRatio):
     # print(os.listdir(modelFolder))
 
 def preprocess(processDir, filename, f, saveData=True, saveImg=False): 
-    """
-        To do: 
-            - make a bubble
-            - preprocessing try ung sinusuggest ni luis 
-            - create an infer.py for preprocessing
-    """
-    
+
     # Input handling
     """
         processDir = raw files to process directory 
@@ -281,21 +275,22 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
         pm_contents = pickle.load(pm_data,encoding ="bytes")
 
     # Outlier Removal and Translation
-    c = 0
+    N = 0
     for key, pts in pm_contents.items():
-        c += len(pts)
+        N += len(pts)
         pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
         pm_contents[key] = normalize(pts)
-    print('orig # of pts: %d || new # of pts: %d'%(c,len(pm_contents.items())))
+    newN = len(pm_contents.items())
+    print('orig # of pts: %d || new # of pts: %d'%(N,newN))
 
     # Aggregate Frames
-    aggframes = decay(pm_contents, c, f)
+    aggframes = decay(pm_contents, N, f)
 
     # Cluster
 
     clustFrames = []                        # array to contain dictionaries
     for _, xyz in aggframes.items():        # iterated len(aggframes) times which is num of frames
-        if(c < 10):
+        if(newN <= f):
             clustFrames.append(dict({0:xyz}))
             continue
         clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
@@ -303,10 +298,12 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
         if(len(clust) == 0): continue
         clustFrames.append(clust)
 
-    while(len(clustFrames) < 10):
+    while(len(clustFrames) < f):
         clustFrames.append(dict({0:np.zeros((1,3))}))
 
-    if(len(clustFrames) != 10): print('frames not 10 but %d'%len(clustFrames)) 
+    if(len(clustFrames) != f): 
+        print('frames not %d but %d'%(f,len(clustFrames)))
+        sys.exit()
     # print(clustFrames)
 
     # Output handling 
@@ -321,7 +318,7 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
     for _3dframe in clustFrames:
         # print("------------>3D FRAME: ",_3dframe)
         xyf,yzf,xzf = createMultiview(_3dframe)      # tuple containing 3 dictionaries xy, yz, xz 2dframes
-        print('len per framee: %d'%len(_3dframe.items()))
+        # print('len per framee: %d'%len(_3dframe.items()))
         if(len(xyf.values()) == 0): continue
         data['xy'].append(np.concatenate(list(xyf.values())))
         data['yz'].append(np.concatenate(list(yzf.values())))
@@ -394,8 +391,8 @@ if __name__=="__main__":
             if(os.path.isdir(pathCheck)): continue
 
         print('preprocessing %s with contents: '%file)
-        preprocess(processDir,file,10, saveData, saveImg)
+        preprocess(processDir,file, 20, saveData, saveImg)
         processed_data.append(file)
         
     
-    createTrainTestFile(dataFolder,raw_data,dataRatio)
+    # createTrainTestFile(dataFolder,raw_data,dataRatio)
