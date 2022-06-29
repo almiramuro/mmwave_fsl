@@ -26,16 +26,17 @@ if __name__=="__main__":
     """
 
     setup, _model= sys.argv[1], sys.argv[2]
-    preDirPath = '../data/preprocessed_data/'
 
     classes = open('glosses','r',encoding='utf-8-sig').readlines()
     classes = [ gloss.strip() for gloss in classes ]
     # _10classes = ['why', 'help_you', 'important', 'family', 'improve', 'none', 'batangas', 'corruption', 'body', 'graduate']
-
-    filePath = setup + '_train_test_all_glosses'
-    dirPath = preDirPath if(setup=='combined') else preDirPath + setup
+    
+    filePath = '_'.join([setup,'train_test_all_glosses'])
+    dirPath = '../data/preprocessed_data/'
+    
+    dirPath = dirPath if(setup == 'combined') else dirPath + setup
     comb = True if(setup=='combined') else False
-    print(dirPath)
+    print(dirPath, filePath)
     testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=comb,train=False,frameCount=10,wordOnly=True)
 
     torch.manual_seed(1)
