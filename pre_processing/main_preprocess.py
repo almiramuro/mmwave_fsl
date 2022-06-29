@@ -80,7 +80,7 @@ def drop_duplicates(stream):
     
     return stream
 
-def normalize(xyz):
+def translate(xyz, trans=True):
     """
         xyz = np array size n x 3
         get centroid 
@@ -95,7 +95,7 @@ def normalize(xyz):
     centroid = tuple(xyzsum[i]/npts for i in range(3))
 
     # Translate all points to make centroid (0,0,0)
-    trans = np.array([[xyz[i][j] - centroid[j] for j in range(3)] for i in range(npts)])
+    trans = np.array([[xyz[i][j] - centroid[j] for j in range(3)] for i in range(npts)]) if(trans) else np.array([[xyz[i][j] for j in range(3)] for i in range(npts)])
 
     # Rotate along the z axis to face the sensor
     # norm = 0
@@ -279,7 +279,7 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
     for key, pts in pm_contents.items():
         N += len(pts)
         pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
-        # pm_contents[key] = normalize(pts)
+        pm_contents[key] = translate(pts, False)
     newN = len(pm_contents.items())
     print('orig # of pts: %d || new # of pts: %d'%(N,newN))
 
@@ -293,7 +293,7 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
         if(newN <= f):
             clustFrames.append(dict({0:xyz}))
             continue
-        # clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
+        clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
         # print(clust)
         if(len(clust) == 0): continue
         clustFrames.append(clust)
@@ -391,7 +391,7 @@ if __name__=="__main__":
             if(os.path.isdir(pathCheck)): continue
 
         print('preprocessing %s with contents: '%file)
-        preprocess(processDir,file, 5, saveData, saveImg)
+        preprocess(processDir,file, 10, saveData, saveImg)
         processed_data.append(file)
         
     

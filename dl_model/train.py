@@ -55,8 +55,8 @@ if __name__=="__main__":
 
 	comb = True if(trainset=='combined') else False
 
-	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,combined=comb, train=True,frameCount=10,wordOnly=True)
-	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,combined=comb, train=False,frameCount=10,wordOnly=True)
+	trainDataset=multiViewDatasetConcat(trainDirPath,classes,trainFilePath,combined=comb, train=True,frameCount=5,wordOnly=True)
+	testDataset=multiViewDatasetConcat(testDirPath,classes,testFilePath,combined=comb, train=False,frameCount=5,wordOnly=True)
 
 	torch.manual_seed(1)
 	torch.cuda.manual_seed(1)
@@ -64,7 +64,7 @@ if __name__=="__main__":
 	torch.backends.cudnn.deterministic = True
 
 
-	net=wordNet(2048,len(classes),2,5,0.65,use_cuda=False,frameCount=10,dataParallel=True)		# 40 changed to 10 ; 10 changed to 5
+	net=wordNet(2048,len(classes),2,5,0.65,use_cuda=False,frameCount=5,dataParallel=True)		# 40 changed to 10 ; 10 changed to 5
 
 	optimizer=optim.Adam(net.parameters(),lr=0.000001)
 	trainDataLoader=DataLoader(trainDataset, batch_size=5, shuffle=True)
@@ -78,7 +78,7 @@ if __name__=="__main__":
 		batchCount=0
 		for x,label in trainDataLoader:		
 			net.zero_grad()
-			y=net(localize(x),10)		# 40 changed to 10
+			y=net(localize(x),5)		# 40 changed to 10
 			loss=criterion(y,localize(label))
 			loss.backward()
 			optimizer.step()
@@ -100,7 +100,7 @@ if __name__=="__main__":
 			count = 0
 			for x,label in testDataLoader:
 				print('sample ', count)		
-				o=net(localize(x),10)	
+				o=net(localize(x),5)	
 				prediction = torch.max(m(o),dim=1)[1].cpu().numpy().tolist()
 				predictions += prediction
 				labels+=label.cpu().numpy().tolist()
