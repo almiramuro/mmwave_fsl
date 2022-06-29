@@ -279,7 +279,7 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
     for key, pts in pm_contents.items():
         N += len(pts)
         pm_contents[key] = cluster(pts, e = 0.8, outlier=True)
-        pm_contents[key] = normalize(pts)
+        # pm_contents[key] = normalize(pts)
     newN = len(pm_contents.items())
     print('orig # of pts: %d || new # of pts: %d'%(N,newN))
 
@@ -293,7 +293,7 @@ def preprocess(processDir, filename, f, saveData=True, saveImg=False):
         if(newN <= f):
             clustFrames.append(dict({0:xyz}))
             continue
-        clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
+        # clust = cluster(xyz, e = 0.5, min_samp = 5, outlier=True)       # dictionary with key color c,and item of np array size n x 3 (pts)
         # print(clust)
         if(len(clust) == 0): continue
         clustFrames.append(clust)
