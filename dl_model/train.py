@@ -13,8 +13,8 @@ import torch.optim as optim
 import torch
 import numpy as np
 import torch.nn.functional as F
-from pre_processing.main_preprocess import frameCount as frames
-
+# from pre_processing.main_preprocess import frameCount as frames
+frames = 10
 
 if __name__=="__main__":
 	"""
@@ -30,7 +30,7 @@ if __name__=="__main__":
     """
 	preDirPath = '../data/preprocessed_data/'
 	# Text files containing the train and test
-	
+ 
 	trainset = sys.argv[1].split('-')[1]
 	testset = sys.argv[2].split('-')[1]
 
