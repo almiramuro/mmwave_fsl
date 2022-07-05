@@ -113,7 +113,7 @@ class multiViewDatasetConcat(Dataset):
 
 		print(len(self.fileList))
 		# print(self.fileList)
-		self.fileListLow=[f.lower() for f in f]		# lowercase everything
+		self.fileListLow=[f.lower() for f in self.fileList]		# lowercase everything
 		if(self.combined):
 			# check folders
 			sFolder=glob.glob(dirPath+'/*')
