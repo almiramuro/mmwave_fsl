@@ -11,7 +11,9 @@ import sys
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import os
-from pre_processing.main_preprocess import frameCount as frames 
+# from pre_processing.main_preprocess import frameCount as frames 
+
+frames = 10
 
 if __name__=="__main__":
     """
@@ -27,6 +29,7 @@ if __name__=="__main__":
     """
 
     setup, _model= sys.argv[1], sys.argv[2]
+    signer = [('alma','A'),('melissa','C'),('rommel','B'), (None,'All')][3]
 
     classes = open('glosses','r',encoding='utf-8-sig').readlines()
     classes = [ gloss.strip() for gloss in classes ]
@@ -38,7 +41,7 @@ if __name__=="__main__":
     dirPath = dirPath if(setup == 'combined') else dirPath + setup
     comb = True if(setup=='combined') else False
     print(dirPath, filePath)
-    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=comb,train=False,frameCount=frames,wordOnly=True)
+    testDataset=multiViewDatasetConcat(dirPath,classes,filePath,combined=comb,train=False,frameCount=frames,wordOnly=True,signer=signer[0])
 
     torch.manual_seed(1)
     torch.cuda.manual_seed(1)
@@ -67,7 +70,7 @@ if __name__=="__main__":
     print("The Confusion Matrix is")
     print(confusion)
     ConfusionMatrixDisplay.from_predictions(labels,predictions)
-    figFile = 'test-%s_model-%s'%(setup,_model.split('/')[0])
-    title = "Train: %s; Test: %s; Accuracy: %f"%(_model.split('-')[0], setup, accuracy)
+    figFile = 'signer-%s-test-%s_model-%s'%(signer[1],setup,_model.split('/')[0])
+    title = "Signer: %s\n Train: %s; Test: %s; Accuracy: %f"%(signer[1],_model.split('-')[0], setup, accuracy)
     plt.title(title)
     plt.savefig(os.path.join('confusion_matrices',figFile + '.png'))

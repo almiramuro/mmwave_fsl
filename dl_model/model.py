@@ -116,7 +116,9 @@ class wordNet(nn.Module):
 		finalLayer=None
 		for i,view in enumerate(self.views):
 			# [(0, 'xy'), (1, 'yz'), (2, 'xz')]
-			x1=x[:,i:i+self.frameCount,:,:,:].reshape(self.batch*self.frameCount,3,74,100)
+			# x1=x[:,i:i+self.frameCount,:,:,:].reshape(self.batch*self.frameCount,3,74,100)
+			j = i * self.frameCount
+			x1=x[:,j:j+self.frameCount,:,:,:].reshape(self.batch*self.frameCount,3,74,100)
 			# x[...] Get all of the first dimension
 			# x[...] Get the second dimension's i:i+self.frameCount elements and everything inside it ([:,:,:])
 			# x[...] is still a 5dimensional tensor

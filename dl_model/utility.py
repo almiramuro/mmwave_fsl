@@ -76,7 +76,7 @@ class multiViewDatasetConcat(Dataset):
 
 	"""
 	# trainDataset=multiViewDatasetConcat(dirPath,classes,filePath,train=True,frameCount=10,wordOnly=True)
-	def __init__(self,dirPath,classes,filePath,combined=False,train=True,frameCount=60,wordOnly=True):
+	def __init__(self,dirPath,classes,filePath,combined=False,train=True,frameCount=60,wordOnly=True, signer=None):
 		
 		#Defining attributes
 
@@ -90,7 +90,7 @@ class multiViewDatasetConcat(Dataset):
 		self.setups = ['indoor','indoor_wnoise','outdoor']
 		self.views=['xy','yz','xz']
 		self.combined = combined
-		
+		self.signer = signer
 		# self.nonManual=nonManual
 		self.wordOnly=wordOnly			# True
 
@@ -105,7 +105,13 @@ class multiViewDatasetConcat(Dataset):
 		else:
 			f=[f.strip().split(',')[1].strip()[:-4] for f in f if 'Test' in f]
 				
-		self.fileList=f								# filenames list
+		
+		if(self.signer != None):
+			self.fileList = [raw for raw in f if(self.signer in raw)]
+		else:
+			self.fileList=f								# filenames list
+
+		print(len(self.fileList))
 		# print(self.fileList)
 		self.fileListLow=[f.lower() for f in f]		# lowercase everything
 		if(self.combined):
